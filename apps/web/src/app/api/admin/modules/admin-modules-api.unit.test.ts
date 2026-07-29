@@ -1,0 +1,172 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+const { getAdminAuthorizationMock, moduleFindManyMock } = vi.hoisted(() => ({
+  getAdminAuthorizationMock: vi.fn(),
+  moduleFindManyMock: vi.fn(),
+}))
+
+vi.mock('@/lib/admin-auth', () => ({
+  getAdminAuthorization: getAdminAuthorizationMock,
+}))
+
+vi.mock('@/lib/prisma', () => ({
+  prisma: {
+    module: {
+      findMany: moduleFindManyMock,
+    },
+  },
+}))
+
+import * as route from './route'
+import { moduleWithSubModulesSelect } from '@/lib/admin-modules'
+
+function authorizeAdmin() {
+  getAdminAuthorizationMock.mockResolvedValue({
+    isAuthorized: true,
+    customer: {
+      id: 1,
+      email: 'admin@example.com',
+      name: 'Admin User',
+      company: null,
+    },
+  })
+}
+
+describe('admin modules API', () => {
+  beforeEach(() => {
+    getAdminAuthorizationMock.mockReset()
+    moduleFindManyMock.mockReset()
+  })
+
+  it('exports GET only for the read-only module list', () => {
+    expect(route.GET).toEqual(expect.any(Function))
+    expect('POST' in route).toBe(false)
+    expect('PUT' in route).toBe(false)
+    expect('PATCH' in route).toBe(false)
+    expect('DELETE' in route).toBe(false)
+  })
+
+  it('rejects non-admin callers before listing modules', async () => {
+    getAdminAuthorizationMock.mockResolvedValue({
+      isAuthorized: false,
+      status: 403,
+      error: 'Admin access required',
+    })
+
+    const response = await route.GET()
+
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: 'Admin access required',
+    })
+    expect(response.status).toBe(403)
+    expect(moduleFindManyMock).not.toHaveBeenCalled()
+  })
+
+  it('returns sorted module summaries with nested sorted sub-modules', async () => {
+    authorizeAdmin()
+    moduleFindManyMock.mockResolvedValue([
+      {
+        id: 2,
+        label: 'CRM',
+        icon: 'Users',
+        href: null,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        roleLinks: [{ id: 99 }],
+        subModules: [
+          {
+            id: 12,
+            moduleId: 2,
+            label: 'Leads',
+            icon: 'Target',
+            href: '/crm/leads',
+            createdAt: new Date('2026-01-03T00:00:00.000Z'),
+          },
+          {
+            id: 11,
+            moduleId: 2,
+            label: 'Contacts',
+            icon: null,
+            href: '/crm/contacts',
+            updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+          },
+        ],
+      },
+      {
+        id: 1,
+        label: 'Analytics',
+        icon: null,
+        href: '/analytics',
+        subModules: [],
+      },
+    ])
+
+    const response = await route.GET()
+    const payload = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(payload).toEqual({
+      success: true,
+      data: {
+        modules: [
+          {
+            id: '1',
+            label: 'Analytics',
+            icon: null,
+            href: '/analytics',
+            subModules: [],
+          },
+          {
+            id: '2',
+            label: 'CRM',
+            icon: 'Users',
+            href: null,
+            subModules: [
+              {
+                id: '11',
+                moduleId: '2',
+                label: 'Contacts',
+                icon: null,
+                href: '/crm/contacts',
+              },
+              {
+                id: '12',
+                moduleId: '2',
+                label: 'Leads',
+                icon: 'Target',
+                href: '/crm/leads',
+              },
+            ],
+          },
+        ],
+      },
+    })
+    expect(JSON.stringify(payload)).not.toContain('createdAt')
+    expect(JSON.stringify(payload)).not.toContain('updatedAt')
+    expect(JSON.stringify(payload)).not.toContain('roleLinks')
+    expect(moduleFindManyMock).toHaveBeenCalledWith({
+      orderBy: { label: 'asc' },
+      select: moduleWithSubModulesSelect,
+    })
+  })
+
+  it('returns a safe 500 response when module loading fails unexpectedly', async () => {
+    authorizeAdmin()
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    moduleFindManyMock.mockRejectedValue(new Error('database unavailable'))
+
+    const response = await route.GET()
+
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: 'Failed to fetch modules',
+    })
+    expect(response.status).toBe(500)
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Admin modules fetch error:',
+      expect.any(Error)
+    )
+
+    consoleErrorSpy.mockRestore()
+  })
+})

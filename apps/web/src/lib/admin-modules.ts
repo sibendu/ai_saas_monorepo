@@ -37,13 +37,24 @@ function toStringId(id: number): string {
   return id.toString()
 }
 
+function compareByLabel(
+  left: { label: string },
+  right: { label: string }
+): number {
+  return left.label.localeCompare(right.label)
+}
+
+function uniqueSortedStringIds(ids: number[]): string[] {
+  return [...new Set(ids)].sort((left, right) => left - right).map(toStringId)
+}
+
 export function mapAdminModule(module: AdminModuleWithSubModules): AdminModuleSummary {
   return {
     id: toStringId(module.id),
     label: module.label,
     icon: module.icon,
     href: module.href,
-    subModules: module.subModules.map(
+    subModules: [...module.subModules].sort(compareByLabel).map(
       (subModule): AdminSubModuleSummary => ({
         id: toStringId(subModule.id),
         moduleId: toStringId(subModule.moduleId),
@@ -56,7 +67,7 @@ export function mapAdminModule(module: AdminModuleWithSubModules): AdminModuleSu
 }
 
 export function mapAdminModules(modules: AdminModuleWithSubModules[]): AdminModuleSummary[] {
-  return modules.map(mapAdminModule)
+  return [...modules].sort(compareByLabel).map(mapAdminModule)
 }
 
 export function mapRoleModuleMapping(
@@ -65,14 +76,18 @@ export function mapRoleModuleMapping(
 ): AdminRoleModuleMappingData {
   return {
     roleId: toStringId(roleId),
-    moduleIds: mappings
-      .filter((mapping) => mapping.subModuleId === null)
-      .map((mapping) => toStringId(mapping.moduleId)),
-    subModuleIds: mappings
-      .filter((mapping): mapping is RoleModuleMappingRow & { subModuleId: number } => {
-        return mapping.subModuleId !== null
-      })
-      .map((mapping) => toStringId(mapping.subModuleId)),
+    moduleIds: uniqueSortedStringIds(
+      mappings
+        .filter((mapping) => mapping.subModuleId === null)
+        .map((mapping) => mapping.moduleId)
+    ),
+    subModuleIds: uniqueSortedStringIds(
+      mappings
+        .filter((mapping): mapping is RoleModuleMappingRow & { subModuleId: number } => {
+          return mapping.subModuleId !== null
+        })
+        .map((mapping) => mapping.subModuleId)
+    ),
   }
 }
 

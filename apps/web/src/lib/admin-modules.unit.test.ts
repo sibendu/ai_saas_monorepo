@@ -31,7 +31,7 @@ describe('admin module helpers', () => {
     })
   })
 
-  it('maps module summaries without leaking database-only fields', () => {
+  it('maps module summaries with sorted sub-modules and without leaking database-only fields', () => {
     const moduleRecord = {
       id: 2,
       label: 'CRM',
@@ -40,6 +40,14 @@ describe('admin module helpers', () => {
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       roleLinks: [{ id: 99 }],
       subModules: [
+        {
+          id: 12,
+          moduleId: 2,
+          label: 'Leads',
+          icon: 'Target',
+          href: '/crm/leads',
+          createdAt: new Date('2026-01-03T00:00:00.000Z'),
+        },
         {
           id: 11,
           moduleId: 2,
@@ -64,27 +72,35 @@ describe('admin module helpers', () => {
           icon: null,
           href: '/crm/contacts',
         },
+        {
+          id: '12',
+          moduleId: '2',
+          label: 'Leads',
+          icon: 'Target',
+          href: '/crm/leads',
+        },
       ],
     })
     expect(mapAdminModule(moduleRecord)).not.toHaveProperty('createdAt')
     expect(mapAdminModule(moduleRecord)).not.toHaveProperty('roleLinks')
     expect(mapAdminModule(moduleRecord).subModules[0]).not.toHaveProperty('updatedAt')
+    expect(mapAdminModule(moduleRecord).subModules[1]).not.toHaveProperty('createdAt')
   })
 
-  it('preserves query order when mapping module lists', () => {
+  it('sorts module lists by label without mutating the query result', () => {
     const modules = [
-      {
-        id: 1,
-        label: 'Billing',
-        icon: null,
-        href: '/billing',
-        subModules: [],
-      },
       {
         id: 2,
         label: 'CRM',
         icon: null,
         href: '/crm',
+        subModules: [],
+      },
+      {
+        id: 1,
+        label: 'Billing',
+        icon: null,
+        href: '/billing',
         subModules: [],
       },
     ]
@@ -93,18 +109,22 @@ describe('admin module helpers', () => {
       'Billing',
       'CRM',
     ])
+    expect(modules.map((moduleRecord) => moduleRecord.label)).toEqual(['CRM', 'Billing'])
   })
 
-  it('separates top-level modules from sub-module mappings as string ids', () => {
+  it('separates top-level modules from sub-module mappings as unique sorted string ids', () => {
     expect(
       mapRoleModuleMapping(7, [
-        { moduleId: 2, subModuleId: null },
-        { moduleId: 3, subModuleId: 12 },
+        { moduleId: 5, subModuleId: null },
         { moduleId: 3, subModuleId: 13 },
+        { moduleId: 2, subModuleId: null },
+        { moduleId: 5, subModuleId: null },
+        { moduleId: 3, subModuleId: 12 },
+        { moduleId: 3, subModuleId: 12 },
       ])
     ).toEqual({
       roleId: '7',
-      moduleIds: ['2'],
+      moduleIds: ['2', '5'],
       subModuleIds: ['12', '13'],
     })
   })
