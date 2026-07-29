@@ -1,10 +1,10 @@
 {
   "version": 1,
   "id": "2026-07-29T15-47-57-341Z",
-  "status": "needs_human_review",
+  "status": "awaiting_approval",
   "root": "C:\\workspace\\AI\\ai_saas_monorepo",
   "targetBranch": "main",
-  "baseRevision": "8cc3f7f5ae4a51d78ff9d0afe919cebf035aa122",
+  "baseRevision": "bda65ef4092329c4b5ba7a988b971ccbeca4d0bb",
   "maxWorkers": 2,
   "runtime": "codex-cli",
   "features": [
