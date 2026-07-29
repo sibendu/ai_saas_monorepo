@@ -1,7 +1,16 @@
 {
   "type": "object",
   "additionalProperties": false,
-  "required": ["status", "summary", "evidence", "needsHumanReview"],
+  "required": [
+    "status",
+    "summary",
+    "evidence",
+    "needsHumanReview",
+    "humanReviewCategory",
+    "missingEvidence",
+    "recoveryHints",
+    "evidenceMatrix"
+  ],
   "properties": {
     "status": { "type": "string", "enum": ["completed", "blocked", "needs_changes"] },
     "summary": { "type": "string" },
