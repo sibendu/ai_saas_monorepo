@@ -435,7 +435,7 @@ function implementationPrompt(context, step, previousFailure) {
         : "This assigned step may be read-only if the listed success criteria are fully evidenced.";
     return `You are the implementer in a local feature-delivery loop. Your job is to IMPLEMENT the assigned step, not merely summarize it.
 
-First read AGENTS.md, CLAUDE.md, docs/orchestrator-design.md, and the feature plan at ${(0, node_path_1.join)(context.runDirectory, "plan.json")}. Then complete the assigned step below.
+First read AGENTS.md, docs/project-context.md, and the feature plan at ${(0, node_path_1.join)(context.runDirectory, "plan.json")}. If CLAUDE.md exists, read it too. Then complete the assigned step below.
 
 ${changeExpectation}
 
@@ -457,7 +457,7 @@ ${previousFailure ? `\nThe previous verification failed. Fix these concrete fail
 Return only JSON matching the supplied schema. Set status to completed only after the assigned step's success criteria are actually satisfied. Set needsHumanReview to true if requirements are ambiguous, risky, or cannot be verified.`;
 }
 function reviewPrompt(context, plan, verification) {
-    return `You are the independent reviewer in a local feature-delivery loop. Read AGENTS.md, docs/orchestrator-design.md, the original feature request, plan, current diff, and verification logs. Do not modify files.
+    return `You are the independent reviewer in a local feature-delivery loop. Read AGENTS.md, docs/project-context.md, the original feature request, plan, current diff, and verification logs. If CLAUDE.md exists, read it too. Do not modify files.
 
 Feature request:
 ${context.feature}
