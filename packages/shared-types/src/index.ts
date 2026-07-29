@@ -114,6 +114,10 @@ export interface AdminUserMutationRequest {
   company?: string | null;
 }
 
+export interface AdminUserRoleAssignmentRequest {
+  roleIds: string[];
+}
+
 export interface LoginRequest {
   email: string;
   password: string;

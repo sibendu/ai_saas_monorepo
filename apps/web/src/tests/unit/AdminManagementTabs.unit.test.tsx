@@ -38,5 +38,7 @@ describe('AdminManagementTabs', () => {
 
     expect(screen.getByText('jane@example.com')).toBeInTheDocument()
     expect(screen.getByText('No roles assigned')).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Manager for Jane User' })).not.toBeChecked()
+    expect(screen.getByRole('button', { name: 'Modules' })).toBeDisabled()
   })
 })

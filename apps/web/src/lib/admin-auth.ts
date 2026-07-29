@@ -24,6 +24,12 @@ interface AdminAuthorizationDenied {
 
 export type AdminAuthorizationResult = AdminAuthorizationAllowed | AdminAuthorizationDenied
 
+interface CustomerRoleLink {
+  role: {
+    name: string
+  }
+}
+
 async function findCustomerWithRoles(email: string) {
   return prisma.customer.findFirst({
     where: { email },
@@ -38,7 +44,11 @@ async function findCustomerWithRoles(email: string) {
 }
 
 function hasAdminRole(customer: Awaited<ReturnType<typeof findCustomerWithRoles>>): boolean {
-  return customer?.userRoles?.some((userRole) => userRole.role.name.toLowerCase() === 'admin') ?? false
+  return (
+    customer?.userRoles?.some(
+      (userRole: CustomerRoleLink) => userRole.role.name.toLowerCase() === 'admin'
+    ) ?? false
+  )
 }
 
 export async function getAdminAuthorization(): Promise<AdminAuthorizationResult> {

@@ -9,6 +9,8 @@ dist/
 
 .venv
 
+.next
+
 # IDE
 .vscode/
 .idea/

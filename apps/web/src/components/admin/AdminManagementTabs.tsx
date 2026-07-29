@@ -54,7 +54,7 @@ export default function AdminManagementTabs({ initialRoles, initialUsers }: Admi
       {activeTab === 'roles' ? (
         <RoleManagement initialRoles={initialRoles} />
       ) : (
-        <UserManagement initialUsers={initialUsers} />
+        <UserManagement initialUsers={initialUsers} availableRoles={initialRoles} />
       )}
     </div>
   )

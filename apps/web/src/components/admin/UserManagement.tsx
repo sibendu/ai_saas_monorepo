@@ -1,10 +1,17 @@
 'use client'
 
 import { FormEvent, useMemo, useState } from 'react'
-import { ApiResponse, AdminUserMutationRequest, AdminUserSummary } from '@saas/shared-types'
+import {
+  AdminRoleSummary,
+  AdminUserMutationRequest,
+  AdminUserRoleAssignmentRequest,
+  AdminUserSummary,
+  ApiResponse,
+} from '@saas/shared-types'
 
 interface UserManagementProps {
   initialUsers: AdminUserSummary[]
+  availableRoles: AdminRoleSummary[]
 }
 
 interface UserFormState {
@@ -31,13 +38,25 @@ function createFormState(user: AdminUserSummary): UserFormState {
   }
 }
 
-export default function UserManagement({ initialUsers }: UserManagementProps) {
+function createRoleSelectionState(users: AdminUserSummary[]): Record<string, string[]> {
+  return users.reduce<Record<string, string[]>>((selections, user) => {
+    selections[user.id] = user.roles.map((role) => role.id)
+
+    return selections
+  }, {})
+}
+
+export default function UserManagement({ initialUsers, availableRoles }: UserManagementProps) {
   const [users, setUsers] = useState<AdminUserSummary[]>(initialUsers)
   const [editingUserId, setEditingUserId] = useState<string | null>(null)
   const [editingState, setEditingState] = useState<UserFormState>(emptyForm)
+  const [roleSelections, setRoleSelections] = useState<Record<string, string[]>>(() =>
+    createRoleSelectionState(initialUsers)
+  )
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [savingRolesUserId, setSavingRolesUserId] = useState<string | null>(null)
 
   const sortedUsers = useMemo(
     () => [...users].sort((first, second) => first.email.localeCompare(second.email)),
@@ -69,9 +88,15 @@ export default function UserManagement({ initialUsers }: UserManagementProps) {
         throw new Error(payload.error ?? 'Failed to update user')
       }
 
+      const updatedUser = payload.data
+
       setUsers((currentUsers) =>
-        currentUsers.map((user) => (user.id === userId ? (payload.data as AdminUserSummary) : user))
+        currentUsers.map((user) => (user.id === userId ? updatedUser : user))
       )
+      setRoleSelections((currentSelections) => ({
+        ...currentSelections,
+        [userId]: updatedUser.roles.map((role) => role.id),
+      }))
       setEditingUserId(null)
       setEditingState(emptyForm)
       setStatusMessage(payload.message ?? 'User updated successfully')
@@ -87,6 +112,61 @@ export default function UserManagement({ initialUsers }: UserManagementProps) {
     setEditingState(createFormState(user))
     setStatusMessage(null)
     setErrorMessage(null)
+  }
+
+  function toggleRoleSelection(userId: string, roleId: string) {
+    setRoleSelections((currentSelections) => {
+      const selectedRoleIds = currentSelections[userId] ?? []
+      const nextSelection = selectedRoleIds.includes(roleId)
+        ? selectedRoleIds.filter((selectedRoleId) => selectedRoleId !== roleId)
+        : [...selectedRoleIds, roleId]
+
+      return {
+        ...currentSelections,
+        [userId]: nextSelection,
+      }
+    })
+  }
+
+  async function handleUpdateRoles(user: AdminUserSummary) {
+    setSavingRolesUserId(user.id)
+    setStatusMessage(null)
+    setErrorMessage(null)
+
+    try {
+      const requestBody: AdminUserRoleAssignmentRequest = {
+        roleIds: roleSelections[user.id] ?? [],
+      }
+      const response = await fetch(`/api/admin/users/${user.id}/roles`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      })
+      const payload = await readApiResponse<AdminUserSummary>(response)
+
+      if (!response.ok || !payload.success || !payload.data) {
+        throw new Error(payload.error ?? 'Failed to update user roles')
+      }
+
+      const updatedUser = payload.data
+
+      setUsers((currentUsers) =>
+        currentUsers.map((currentUser) =>
+          currentUser.id === user.id ? updatedUser : currentUser
+        )
+      )
+      setRoleSelections((currentSelections) => ({
+        ...currentSelections,
+        [user.id]: updatedUser.roles.map((role) => role.id),
+      }))
+      setStatusMessage(payload.message ?? 'User roles updated successfully')
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to update user roles')
+    } finally {
+      setSavingRolesUserId(null)
+    }
   }
 
   return (
@@ -218,23 +298,59 @@ export default function UserManagement({ initialUsers }: UserManagementProps) {
                           {user.company ?? 'No company'}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">
-                          {user.roles.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                              {user.roles.map((role) => (
-                                <span
-                                  key={role.id}
-                                  className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700"
-                                >
-                                  {role.name}
-                                </span>
-                              ))}
-                            </div>
-                          ) : (
-                            'No roles assigned'
-                          )}
+                          <div className="space-y-3">
+                            {user.roles.length > 0 ? (
+                              <div className="flex flex-wrap gap-2">
+                                {user.roles.map((role) => (
+                                  <span
+                                    key={role.id}
+                                    className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700"
+                                  >
+                                    {role.name}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <p>No roles assigned</p>
+                            )}
+
+                            {availableRoles.length > 0 ? (
+                              <fieldset>
+                                <legend className="sr-only">Assign roles for {user.name}</legend>
+                                <div className="grid min-w-52 gap-2 sm:grid-cols-2">
+                                  {availableRoles.map((role) => {
+                                    const roleSelection = roleSelections[user.id] ?? []
+                                    const isChecked = roleSelection.includes(role.id)
+                                    const checkboxId = `user-${user.id}-role-${role.id}`
+
+                                    return (
+                                      <label
+                                        key={role.id}
+                                        className="flex items-center gap-2 rounded-md border border-gray-200 px-2.5 py-2 text-xs font-medium text-gray-700"
+                                        htmlFor={checkboxId}
+                                      >
+                                        <input
+                                          id={checkboxId}
+                                          type="checkbox"
+                                          className="h-4 w-4 rounded border-gray-300 text-indigo-600"
+                                          checked={isChecked}
+                                          onChange={() => toggleRoleSelection(user.id, role.id)}
+                                          disabled={savingRolesUserId === user.id}
+                                          aria-label={`${role.name} for ${user.name}`}
+                                        />
+                                        <span>{role.name}</span>
+                                      </label>
+                                    )
+                                  })}
+                                </div>
+                              </fieldset>
+                            ) : (
+                              <p className="text-sm text-gray-500">No available roles</p>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex justify-end">
+                          <div className="flex flex-col items-end gap-2">
                             <button
                               type="button"
                               onClick={() => startEditing(user)}
@@ -243,6 +359,15 @@ export default function UserManagement({ initialUsers }: UserManagementProps) {
                               aria-label={`Edit ${user.name}`}
                             >
                               Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void handleUpdateRoles(user)}
+                              className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:bg-indigo-300"
+                              disabled={availableRoles.length === 0 || savingRolesUserId === user.id}
+                              aria-label={`Save roles for ${user.name}`}
+                            >
+                              {savingRolesUserId === user.id ? 'Saving...' : 'Save roles'}
                             </button>
                           </div>
                         </td>

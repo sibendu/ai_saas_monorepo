@@ -6,6 +6,18 @@ import { getAuthenticatedShellData } from '@/lib/role-menu'
 import { prisma } from '@/lib/prisma'
 import { AdminRoleSummary, AdminUserSummary } from '@saas/shared-types'
 
+interface AdminRoleWithCounts {
+  id: number
+  name: string
+  description: string | null
+  createdAt: Date
+  updatedAt: Date
+  _count: {
+    users: number
+    modules: number
+  }
+}
+
 async function getRoles(): Promise<AdminRoleSummary[]> {
   const roles = await prisma.role.findMany({
     orderBy: { name: 'asc' },
@@ -19,7 +31,7 @@ async function getRoles(): Promise<AdminRoleSummary[]> {
     },
   })
 
-  return roles.map((role) => ({
+  return roles.map((role: AdminRoleWithCounts) => ({
     id: role.id.toString(),
     name: role.name,
     description: role.description,

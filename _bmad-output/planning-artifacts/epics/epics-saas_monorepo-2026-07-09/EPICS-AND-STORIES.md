@@ -515,7 +515,7 @@ This document maps all Phase 1 features from the PRD into epics (major units) an
 **Covers:** FR.04.05 (Module access mapping)
 
 **Required:**
-- [ ] On role detail page, show module access
+- [ ] In Admi section, add another tab/page through which admin user should be able to edit association between roles and modules i.e. which modules a role can access 
 - [ ] Checkboxes for each module and its sub-modules
 - [ ] Admin can check/uncheck to grant/revoke access
 - [ ] Backend endpoint:
@@ -541,19 +541,20 @@ This document maps all Phase 1 features from the PRD into epics (major units) an
 
 **Required:**
 - [ ] Log all admin changes: who, what, when
-- [ ] Log to console or database
+- [ ] Log to database
 - [ ] Track: role created, role updated, role deleted, user assigned to role, user removed from role, module access granted/revoked
+- [ ] UI: Logs should be viewable and filterable via a screen in Admin section. It should be view-only, and not allow edit 
 - [ ] Backend: add logging calls to each admin endpoint
 
 **Implementation Location:**
 - Logging: add to each admin endpoint in BFF or web API
-- Minimal Phase 1: console.log with timestamp, action, user, entity
-- Phase 2: database table for audit logs
+- Log with timestamp, action, user, entity
+- Database table for audit logs
 
 **Acceptance Criteria:**
 - [ ] Admin actions logged with timestamp
 - [ ] Logs include: who did it, what action, which entity
-- [ ] Logs visible in console (dev) or searchable in database (prod)
+- [ ] Logs visible or searchable in database (prod)
 
 ---
 

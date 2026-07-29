@@ -1,5 +1,5 @@
 # generated: 2026-07-17T20:39:12.1567933+05:30
-# last_updated: 2026-07-18T13:43:01.8816941+05:30
+# last_updated: 2026-07-29T20:55:13+05:30
 # project: saas_monorepo
 # project_key: NOKEY
 # tracking_system: file-system
@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-17T20:39:12.1567933+05:30
-last_updated: 2026-07-18T13:43:01.8816941+05:30
+last_updated: 2026-07-29T20:55:13+05:30
 project: saas_monorepo
 project_key: NOKEY
 tracking_system: file-system
@@ -76,9 +76,9 @@ development_status:
   4-1-create-admin-layout-role-restricted-access: done
   4-2-admin-panel-role-management-crud: done
   4-3-admin-panel-user-management-list-edit-view-roles: review
-  4-4-admin-panel-user-role-assignment-many-to-many: backlog
-  4-5-admin-panel-role-module-mapping-crud: backlog
-  4-6-admin-panel-audit-trail-logging: backlog
+  4-4-admin-panel-user-role-assignment-many-to-many: review
+  4-5-admin-panel-role-module-mapping-crud: ready-for-dev
+  4-6-admin-panel-audit-trail-logging: ready-for-dev
   epic-4-retrospective: optional
 
   epic-5: backlog
