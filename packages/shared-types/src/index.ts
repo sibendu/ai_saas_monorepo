@@ -85,6 +85,37 @@ export interface AdminRolesData {
   roles: AdminRoleSummary[];
 }
 
+export interface AdminSubModuleSummary {
+  id: string;
+  moduleId: string;
+  label: string;
+  icon?: string | null;
+  href: string;
+}
+
+export interface AdminModuleSummary {
+  id: string;
+  label: string;
+  icon?: string | null;
+  href?: string | null;
+  subModules: AdminSubModuleSummary[];
+}
+
+export interface AdminModulesData {
+  modules: AdminModuleSummary[];
+}
+
+export interface AdminRoleModuleMappingData {
+  roleId: string;
+  moduleIds: string[];
+  subModuleIds: string[];
+}
+
+export interface AdminRoleModuleMappingRequest {
+  moduleIds: string[];
+  subModuleIds: string[];
+}
+
 export interface AdminRoleMutationRequest {
   name: string;
   description?: string | null;

@@ -24,6 +24,9 @@
       }
     ],
     "paths": {
+      "@saas/shared-types": [
+        "../../packages/shared-types/src"
+      ],
       "@/*": [
         "./src/*"
       ]
@@ -37,6 +40,7 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "prisma.config.ts"
   ]
 }
