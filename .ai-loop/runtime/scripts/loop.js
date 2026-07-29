@@ -105,7 +105,7 @@ function command(name) {
 }
 function schemaPath(root, file) {
     const projectSchema = (0, node_path_1.join)(root, "scripts", "schemas", file);
-    return (0, node_fs_1.existsSync)(projectSchema) ? projectSchema : (0, node_path_1.join)(__dirname, "schemas", file);
+    return (0, node_fs_1.existsSync)(projectSchema) ? projectSchema : (0, node_path_1.join)(__dirname, "..", "schemas", file);
 }
 function runId() {
     return new Date().toISOString().replace(/[:.]/g, "-");

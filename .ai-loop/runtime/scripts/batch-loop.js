@@ -107,7 +107,7 @@ async function verifyIntegration(root, worktree, config, batchDirectory) {
 }
 function runtimeSchema(root) {
     const projectSchema = (0, node_path_1.join)(root, "scripts", "schemas", "agent-result.schema.json");
-    return (0, node_fs_1.existsSync)(projectSchema) ? projectSchema : (0, node_path_1.join)(__dirname, "schemas", "agent-result.schema.json");
+    return (0, node_fs_1.existsSync)(projectSchema) ? projectSchema : (0, node_path_1.join)(__dirname, "..", "schemas", "agent-result.schema.json");
 }
 function unsafeConflict(path) {
     return /(^|[\\/])(prisma[\\/]migrations|migrations|\.env|AGENTS\.md|CLAUDE\.md|\.ai-loop)([\\/]|$)|(^|[\\/])(package-lock\.json|pnpm-lock\.yaml|yarn\.lock)$/i.test(path);
@@ -237,6 +237,7 @@ async function main() {
         if (batch.status !== "awaiting_approval")
             throw new Error(`Batch ${id} is not awaiting approval.`);
         const { config } = await (0, project_config_1.loadProjectConfig)(root);
+        batch.baseRevision = await git(root, ["rev-parse", batch.targetBranch]);
         if (await git(root, ["status", "--porcelain"]))
             throw new Error("Target repository must be clean before a batch starts.");
         batch.status = "running";

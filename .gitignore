@@ -39,8 +39,13 @@ coverage/
 # Cache
 .turbo/
 
+# AI feature loop generated artifacts
+.ai-loop/runs/
+.ai-loop/worktrees/
+.ai-loop/batches/*/features/
+.ai-loop/batches/*/result.json
+
 # Playwright
 test-results/
 playwright-report/
 blob-report/
-
