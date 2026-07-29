@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="6" failures="0" errors="0" time="0.2307484">
+    <testsuite name="src/tests/integration/api.integration.test.ts" timestamp="2026-07-18T08:12:07.040Z" hostname="YY341663" tests="6" failures="0" errors="0" skipped="0" time="0.2307484">
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns customers list" time="0.132832">
+        </testcase>
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns task list with required task fields" time="0.0493846">
+        </testcase>
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; updates task fields from actions menu edit flow" time="0.0300401">
+        </testcase>
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; deletes task after confirmation flow" time="0.0050067">
+        </testcase>
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns dashboard data for valid user payload" time="0.0052149">
+        </testcase>
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns 400 when dashboard request missing user email" time="0.0062221">
+        </testcase>
+    </testsuite>
+</testsuites>

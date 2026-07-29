@@ -1,0 +1,74 @@
+{
+  "$schema": "./project.schema.json",
+  "version": 1,
+  "project": {
+    "name": "saas-monorepo",
+    "architecture": "Node.js"
+  },
+  "environment": {
+    "file": ".env",
+    "requiredVariables": []
+  },
+  "concurrency": {
+    "maxWorkers": 2,
+    "verificationDatabaseAccess": "none"
+  },
+  "integration": {
+    "targetBranch": "main",
+    "autoMerge": true,
+    "attemptConflictResolution": true
+  },
+  "preflight": {
+    "commands": [
+      {
+        "id": "node",
+        "executable": "node",
+        "args": [
+          "--version"
+        ]
+      },
+      {
+        "id": "git",
+        "executable": "git",
+        "args": [
+          "--version"
+        ]
+      },
+      {
+        "id": "npm",
+        "executable": "npm",
+        "args": [
+          "--version"
+        ]
+      }
+    ]
+  },
+  "verification": {
+    "commands": [
+      {
+        "id": "test",
+        "executable": "npm",
+        "args": [
+          "run",
+          "test"
+        ]
+      },
+      {
+        "id": "e2e",
+        "executable": "npm",
+        "args": [
+          "run",
+          "test:e2e"
+        ]
+      }
+    ],
+    "finalBuild": {
+      "id": "build",
+      "executable": "npm",
+      "args": [
+        "run",
+        "build"
+      ]
+    }
+  }
+}

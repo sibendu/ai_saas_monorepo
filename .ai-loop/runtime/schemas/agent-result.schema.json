@@ -1,0 +1,53 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "summary", "evidence", "needsHumanReview"],
+  "properties": {
+    "status": { "type": "string", "enum": ["completed", "blocked", "needs_changes"] },
+    "summary": { "type": "string" },
+    "evidence": { "type": "array", "items": { "type": "string" } },
+    "needsHumanReview": { "type": "boolean" },
+    "humanReviewCategory": {
+      "type": "string",
+      "enum": [
+        "ambiguous_requirement",
+        "security_risk",
+        "db_overlap",
+        "destructive_db_change",
+        "external_dependency",
+        "tooling_failure",
+        "reviewer_rejected_evidence"
+      ]
+    },
+    "missingEvidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["criterion", "gap"],
+        "properties": {
+          "criterion": { "type": "string" },
+          "gap": { "type": "string" }
+        }
+      }
+    },
+    "recoveryHints": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "evidenceMatrix": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["criterion", "codeEvidence", "testEvidence", "verificationEvidence"],
+        "properties": {
+          "criterion": { "type": "string" },
+          "codeEvidence": { "type": "string" },
+          "testEvidence": { "type": "string" },
+          "verificationEvidence": { "type": "string" }
+        }
+      }
+    }
+  }
+}

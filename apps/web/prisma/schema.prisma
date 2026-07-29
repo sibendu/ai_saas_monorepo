@@ -24,14 +24,15 @@ enum TaskPriority {
 }
 
 model Customer {
-  id               Int              @id @default(autoincrement())
-  email            String           @map("username")
-  password         String
-  name             String
-  company          String?
-  registrationType RegistrationType @default(DIRECT) @map("registration_type")
-  passwordResetToken String?        @map("password_reset_token")
-  passwordResetExpiresAt DateTime?  @map("password_reset_expires_at")
+  id                     Int              @id @default(autoincrement())
+  email                  String           @map("username")
+  password               String
+  name                   String
+  company                String?
+  registrationType       RegistrationType @default(DIRECT) @map("registration_type")
+  passwordResetToken     String?          @map("password_reset_token")
+  passwordResetExpiresAt DateTime?        @map("password_reset_expires_at")
+  userRoles              UserRole[]
 
   @@map("customer")
 }
@@ -46,4 +47,71 @@ model Task {
   owner    String
 
   @@map("task")
+}
+
+model Role {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  description String?
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  modules     RoleModule[]
+  users       UserRole[]
+
+  @@map("role")
+}
+
+model Module {
+  id         Int          @id @default(autoincrement())
+  label      String       @unique
+  icon       String?
+  href       String?
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+  roleLinks  RoleModule[]
+  subModules SubModule[]
+
+  @@map("module")
+}
+
+model SubModule {
+  id        Int          @id @default(autoincrement())
+  moduleId  Int          @map("module_id")
+  label     String
+  icon      String?
+  href      String
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  module    Module       @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  roleLinks RoleModule[]
+
+  @@unique([moduleId, label])
+  @@unique([moduleId, href])
+  @@map("sub_module")
+}
+
+model RoleModule {
+  id          Int        @id @default(autoincrement())
+  roleId      Int        @map("role_id")
+  moduleId    Int        @map("module_id")
+  subModuleId Int?       @map("sub_module_id")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  module      Module     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  role        Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  subModule   SubModule? @relation(fields: [subModuleId], references: [id], onDelete: Cascade)
+
+  @@index([roleId, moduleId])
+  @@index([subModuleId])
+  @@map("role_module")
+}
+
+model UserRole {
+  customerId Int      @map("customer_id")
+  roleId     Int      @map("role_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([customerId, roleId])
+  @@map("user_role")
 }

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="3" failures="0" errors="0" time="2.1082902">
+    <testsuite name="src/app/forgot-password/forgot-password.integration.test.tsx" timestamp="2026-07-18T08:12:02.610Z" hostname="YY341663" tests="2" failures="0" errors="0" skipped="0" time="1.1622256">
+        <testcase classname="src/app/forgot-password/forgot-password.integration.test.tsx" name="ForgotPasswordPage integration &gt; submits email and shows success message" time="0.7131293">
+        </testcase>
+        <testcase classname="src/app/forgot-password/forgot-password.integration.test.tsx" name="ForgotPasswordPage integration &gt; shows social-login guidance when api returns social message" time="0.4432093">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/app/reset-password/reset-password.integration.test.tsx" timestamp="2026-07-18T08:12:02.615Z" hostname="YY341663" tests="1" failures="0" errors="0" skipped="0" time="0.9460646">
+        <testcase classname="src/app/reset-password/reset-password.integration.test.tsx" name="ResetPasswordPage activation token flow &gt; submits token query parameter to reset password api" time="0.9410801">
+        </testcase>
+    </testsuite>
+</testsuites>

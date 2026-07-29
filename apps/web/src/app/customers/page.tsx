@@ -1,9 +1,7 @@
-import { redirect } from 'next/navigation'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '../api/auth/[...nextauth]/auth-options'
 import { CustomersResponse } from '@saas/shared-types'
 import CustomersList from '@/components/CustomersList'
 import AppShell from '@/components/AppShell'
+import { getAuthenticatedShellData } from '@/lib/role-menu'
 
 async function getCustomers(): Promise<CustomersResponse | null> {
   try {
@@ -27,17 +25,15 @@ async function getCustomers(): Promise<CustomersResponse | null> {
 }
 
 export default async function CustomersPage() {
-  const session = await getServerSession(authOptions)
-  
-  if (!session) {
-    redirect('/login')
-  }
+  const { session, menuSections, menuLayout } = await getAuthenticatedShellData()
 
   const customersData = await getCustomers()
 
   return (
     <AppShell
       user={session.user}
+      menuSections={menuSections}
+      menuLayout={menuLayout}
       pageTitle="Customers"
       pageSubtitle="Manage and view your customer database"
     >

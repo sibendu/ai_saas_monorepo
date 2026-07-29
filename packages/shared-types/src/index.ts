@@ -4,6 +4,114 @@ export interface User {
   username?: string;
   email: string;
   role: 'admin' | 'user';
+  roles?: Role[];
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description?: string | null;
+  modules?: RoleModule[];
+}
+
+export interface Module {
+  id: string;
+  label: string;
+  icon?: string | null;
+  href?: string | null;
+  subModules?: SubModule[];
+}
+
+export interface SubModule {
+  id: string;
+  moduleId: string;
+  label: string;
+  icon?: string | null;
+  href: string;
+}
+
+export interface AllowedSubModule {
+  id: string;
+  label: string;
+  icon?: string | null;
+  href: string;
+}
+
+export interface AllowedModule {
+  id: string;
+  label: string;
+  icon?: string | null;
+  href?: string | null;
+  subModules: AllowedSubModule[];
+}
+
+export interface RoleModule {
+  id: string;
+  roleId: string;
+  moduleId: string;
+  subModuleId?: string | null;
+  module?: Module;
+  subModule?: SubModule | null;
+}
+
+export interface UserRole {
+  customerId: string;
+  roleId: string;
+  role?: Role;
+}
+
+export interface UserRolesRequest {
+  email: string;
+}
+
+export interface UserRolesResponse {
+  success: boolean;
+  roles: Role[];
+  modules: AllowedModule[];
+  error?: string;
+}
+
+export interface AdminRoleSummary {
+  id: string;
+  name: string;
+  description?: string | null;
+  userCount: number;
+  moduleCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminRolesData {
+  roles: AdminRoleSummary[];
+}
+
+export interface AdminRoleMutationRequest {
+  name: string;
+  description?: string | null;
+}
+
+export interface AdminUserRoleSummary {
+  id: string;
+  name: string;
+  description?: string | null;
+}
+
+export interface AdminUserSummary {
+  id: string;
+  email: string;
+  name: string;
+  company?: string | null;
+  roles: AdminUserRoleSummary[];
+}
+
+export interface AdminUsersData {
+  users: AdminUserSummary[];
+}
+
+export interface AdminUserMutationRequest {
+  email: string;
+  name: string;
+  company?: string | null;
 }
 
 export interface LoginRequest {

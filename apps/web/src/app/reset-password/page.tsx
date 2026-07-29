@@ -1,14 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signIn } from 'next-auth/react'
 
 export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <ResetPasswordForm />
+    </Suspense>
+  )
+}
+
+function ResetPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const code = searchParams.get('code') || ''
+  const token = searchParams.get('token') || searchParams.get('code') || ''
 
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -19,7 +27,7 @@ export default function ResetPasswordPage() {
     e.preventDefault()
     setError('')
 
-    if (!code) {
+    if (!token) {
       setError('Invalid password reset link')
       return
     }
@@ -38,7 +46,7 @@ export default function ResetPasswordPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          code,
+          token,
           password,
           confirmPassword,
         }),

@@ -1,7 +1,5 @@
-import { redirect } from 'next/navigation'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '../api/auth/[...nextauth]/auth-options'
 import AppShell from '@/components/AppShell'
+import { getAuthenticatedShellData } from '@/lib/role-menu'
 import { DashboardData, DashboardRequest } from '@saas/shared-types'
 
 async function getDashboardData(user: DashboardRequest['user']): Promise<DashboardData | null> {
@@ -30,11 +28,7 @@ async function getDashboardData(user: DashboardRequest['user']): Promise<Dashboa
 }
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions)
-
-  if (!session) {
-    redirect('/login')
-  }
+  const { session, menuSections, menuLayout } = await getAuthenticatedShellData()
 
   const dashboardData = await getDashboardData({
     email: session.user?.email || '',
@@ -43,7 +37,13 @@ export default async function DashboardPage() {
 
   if (!dashboardData) {
     return (
-      <AppShell user={session.user} pageTitle="Dashboard" pageSubtitle="Analytics overview with cross-filter style layout">
+      <AppShell
+        user={session.user}
+        menuSections={menuSections}
+        menuLayout={menuLayout}
+        pageTitle="Dashboard"
+        pageSubtitle="Analytics overview with cross-filter style layout"
+      >
         <div className="bg-white rounded-lg shadow p-8 text-center">
           <p className="text-red-600">Failed to load dashboard data. Please try again later.</p>
         </div>
@@ -52,7 +52,13 @@ export default async function DashboardPage() {
   }
 
   return (
-    <AppShell user={session.user} pageTitle="Dashboard" pageSubtitle="Analytics overview with cross-filter style layout">
+    <AppShell
+      user={session.user}
+      menuSections={menuSections}
+      menuLayout={menuLayout}
+      pageTitle="Dashboard"
+      pageSubtitle="Analytics overview with cross-filter style layout"
+    >
       <div className="space-y-6">
         <div className="bg-white rounded-lg shadow p-4 sm:p-5 lg:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

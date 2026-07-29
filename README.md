@@ -17,36 +17,63 @@ saas-monorepo/
 
 ### Prerequisites
 - Node.js 18+ and npm
+- PostgreSQL 14+ running locally or a reachable PostgreSQL database
 
 ### Installation
 
 ```bash
 # Install all dependencies
 npm install
+```
 
-# Install dependencies for all workspaces
-npm install --workspaces
+### Prisma and Database Setup
+
+Prisma is owned by the `apps/web` workspace and is pinned to Prisma `6.19.2`. Run the database commands from the repository root so npm resolves the workspace-local Prisma CLI.
+
+1. Start PostgreSQL.
+
+   PowerShell example:
+
+   ```powershell
+   C:\Software\PostgreSQL\18\bin\pg_ctl start -D C:\Software\PostgreSQL\18\data
+   ```
+
+2. Create the web app environment file.
+
+   ```powershell
+   Copy-Item apps\web\.env.local.example apps\web\.env
+   ```
+
+3. Edit `apps/web/.env` and set `DATABASE_URL`.
+
+   ```env
+   DATABASE_URL=postgresql://postgres:password@localhost:5432/postgres
+   ```
+
+4. Validate the schema, apply migrations, and generate the Prisma client.
+
+   ```powershell
+   npm run db:validate
+   npm run db:deploy
+   npm run db:generate
+   ```
+
+For local schema development, create a new migration with:
+
+```powershell
+npm run db:migrate -- --name your_migration_name
+```
+
+Useful Prisma commands:
+
+```powershell
+npm run db:status
+npm run db:studio
 ```
 
 ### Development
 
 ```bash
-# Start PostGreSQL Server
-C:\Software\PostgreSQL\18\bin\pg_ctl start -D C:\Software\PostgreSQL\18\data
-
-## Prisma commands to sync database schema
-npx prisma migrate dev --name add-registration-type
-npx prisma migrate
-
-set DATABASE_URL=postgresql://postgres:password@localhost:5432/postgres
-
-From repo root, apply migrations
-npm exec --workspace=apps/web prisma migrate deploy --schema prisma/schema.prisma
-
-Regenerate Prisma client
-npm exec --workspace=apps/web prisma generate --schema prisma/schema.prisma
-
-
 # Run both web and bff in development mode
 npm run dev
 

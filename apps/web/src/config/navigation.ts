@@ -1,4 +1,5 @@
 export type MenuIconKey = 'users' | 'profile' | 'workspace' | 'settings' | 'menu' | 'close' | 'chevron'
+export type MenuLayout = 'left' | 'top'
 
 export interface MenuItemConfig {
   label: string
@@ -29,10 +30,21 @@ export interface MenuUiConfig {
   sectionExpandIcon: MenuIconKey
 }
 
+export function isDirectMenuSection(section: MenuSectionConfig): boolean {
+  return (
+    section.items.length === 1 &&
+    section.items[0].label === section.label
+  )
+}
+
+export function getConfiguredMenuLayout(): MenuLayout {
+  return process.env.MENU_LAYOUT === 'top' ? 'top' : 'left'
+}
+
 export const menuSections: MenuSectionConfig[] = [
   {
-    id: 'workspace',
-    label: 'Workspace',
+    id: 'dashboard',
+    label: 'Dashboard',
     icon: 'workspace',
     items: [
       {
@@ -40,20 +52,29 @@ export const menuSections: MenuSectionConfig[] = [
         href: '/dashboard',
         icon: 'workspace',
       },
+    ],
+  },
+  {
+    id: 'customers',
+    label: 'Customers',
+    icon: 'users',
+    items: [
       {
         label: 'Customers',
         href: '/customers',
         icon: 'users',
       },
+    ],
+  },
+  {
+    id: 'tasks',
+    label: 'Task List',
+    icon: 'workspace',
+    items: [
       {
         label: 'Task List',
         href: '/tasks',
         icon: 'workspace',
-      },
-      {
-        label: 'Preferences',
-        href: '/preferences',
-        icon: 'profile',
       },
     ],
   },
@@ -63,7 +84,7 @@ export const menuSections: MenuSectionConfig[] = [
     icon: 'settings',
     items: [
       {
-        label: 'Profile Setup',
+        label: 'Preferences',
         href: '/preferences',
         icon: 'profile',
       },

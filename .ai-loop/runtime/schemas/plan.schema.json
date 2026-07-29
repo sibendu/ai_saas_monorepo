@@ -1,0 +1,93 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["summary", "acceptanceCriteria", "acceptanceContract", "testContract", "truthTable", "steps"],
+  "properties": {
+    "summary": { "type": "string" },
+    "acceptanceCriteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "acceptanceContract": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "criterion", "requiredEvidence", "acceptableTestTypes"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "criterion": { "type": "string" },
+          "requiredEvidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" }
+          },
+          "acceptableTestTypes": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": ["unit", "integration", "e2e", "db", "static-analysis", "manual"]
+            }
+          }
+        }
+      }
+    },
+    "testContract": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["criterionId", "testName", "testType", "proves"],
+        "properties": {
+          "criterionId": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "testName": { "type": "string" },
+          "testType": {
+            "type": "string",
+            "enum": ["unit", "integration", "e2e", "db", "static-analysis", "manual"]
+          },
+          "proves": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "truthTable": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["scenario", "given", "when", "then"],
+        "properties": {
+          "scenario": { "type": "string" },
+          "given": { "type": "string" },
+          "when": { "type": "string" },
+          "then": { "type": "string" }
+        }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title", "instructions", "dependsOn", "successCriteria", "mayChangeDatabase"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "title": { "type": "string" },
+          "instructions": { "type": "string" },
+          "dependsOn": { "type": "array", "items": { "type": "string" } },
+          "successCriteria": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "mayChangeDatabase": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

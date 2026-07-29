@@ -1,9 +1,7 @@
-import { redirect } from 'next/navigation'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '../api/auth/[...nextauth]/auth-options'
 import { TasksResponse } from '@saas/shared-types'
 import AppShell from '@/components/AppShell'
 import TaskList from '@/components/TaskList'
+import { getAuthenticatedShellData } from '@/lib/role-menu'
 
 async function getTasks(): Promise<TasksResponse | null> {
   try {
@@ -26,16 +24,18 @@ async function getTasks(): Promise<TasksResponse | null> {
 }
 
 export default async function TasksPage() {
-  const session = await getServerSession(authOptions)
-
-  if (!session) {
-    redirect('/login')
-  }
+  const { session, menuSections, menuLayout } = await getAuthenticatedShellData()
 
   const tasksData = await getTasks()
 
   return (
-    <AppShell user={session.user} pageTitle="Task List" pageSubtitle="Web and mobile friendly task tracking view">
+    <AppShell
+      user={session.user}
+      menuSections={menuSections}
+      menuLayout={menuLayout}
+      pageTitle="Task List"
+      pageSubtitle="Web and mobile friendly task tracking view"
+    >
       {tasksData ? (
         <TaskList tasks={tasksData.tasks} total={tasksData.total} />
       ) : (

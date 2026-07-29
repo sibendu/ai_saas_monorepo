@@ -12,4 +12,11 @@ export const handlers = [
       email: 'user@example.com',
     })
   }),
+  http.get('*/api/user/roles', async () => {
+    return HttpResponse.json({
+      success: true,
+      roles: [],
+      modules: [],
+    })
+  }),
 ]

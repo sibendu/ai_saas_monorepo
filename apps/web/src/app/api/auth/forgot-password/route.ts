@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     })
 
     const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-    const resetLink = `${appUrl}/reset-password?code=${rawToken}`
+    const resetLink = `${appUrl}/reset-password?token=${rawToken}`
     await sendPasswordResetEmail(normalizedEmail, resetLink)
 
     return NextResponse.json({ message: genericMessage }, { status: 200 })

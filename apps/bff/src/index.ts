@@ -1,13 +1,19 @@
+import './lib/load-env';
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import customersRouter from './routes/customers';
 import dashboardRouter from './routes/dashboard';
+import rolesRouter from './routes/roles';
 import tasksRouter from './routes/tasks';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3001;
+
+function isTestRuntime(): boolean {
+  return process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+}
 
 // Middleware
 app.use(helmet()); // Security headers
@@ -33,6 +39,7 @@ app.get('/health', (req: Request, res: Response) => {
 // Routes
 app.use('/api', customersRouter);
 app.use('/api', dashboardRouter);
+app.use('/api', rolesRouter);
 app.use('/api', tasksRouter);
 
 // 404 handler
@@ -54,7 +61,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 });
 
 // Start server
-if (process.env.NODE_ENV !== 'test') {
+if (!isTestRuntime()) {
   app.listen(PORT, () => {
     console.log(`🚀 BFF server running on http://localhost:${PORT}`);
     console.log(`📊 Health check: http://localhost:${PORT}/health`);

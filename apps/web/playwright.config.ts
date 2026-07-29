@@ -1,11 +1,14 @@
 import { defineConfig, devices } from '@playwright/test'
 
+const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000'
+const webServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND || 'npm run dev'
+
 export default defineConfig({
   testDir: './src/tests/e2e',
   fullyParallel: true,
   retries: 0,
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL,
     trace: 'on-first-retry',
   },
   projects: [
@@ -15,8 +18,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
+    command: webServerCommand,
+    url: baseURL,
     reuseExistingServer: true,
     timeout: 120000,
   },

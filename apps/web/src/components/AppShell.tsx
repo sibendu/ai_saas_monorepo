@@ -5,15 +5,26 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import {
+  isDirectMenuSection,
+  MenuLayout,
   MenuIconKey,
+  MenuSectionConfig,
   menuSections,
   menuUiConfig,
 } from '@/config/navigation'
+import TopMenu from '@/components/TopMenu'
+
+interface ShellUser {
+  name?: string | null
+  email?: string | null
+}
 
 interface AppShellProps {
-  user: any
+  user: ShellUser | null | undefined
   pageTitle: string
   pageSubtitle?: string
+  menuSections?: MenuSectionConfig[]
+  menuLayout?: MenuLayout
   children: ReactNode
 }
 
@@ -83,20 +94,30 @@ function Icon({ name, className = 'w-5 h-5' }: { name: MenuIconKey; className?: 
   )
 }
 
-export default function AppShell({ user, pageTitle, pageSubtitle, children }: AppShellProps) {
+export default function AppShell({
+  user,
+  pageTitle,
+  pageSubtitle,
+  menuSections: providedMenuSections,
+  menuLayout = 'left',
+  children,
+}: AppShellProps) {
   const pathname = usePathname()
+  const visibleMenuSections = providedMenuSections ?? menuSections
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() =>
-    menuSections.reduce((acc, section) => {
+    visibleMenuSections.reduce((acc, section) => {
       acc[section.id] = true
       return acc
     }, {} as Record<string, boolean>)
   )
 
   const sectionWithActiveItem = useMemo(() => {
-    return menuSections.find((section) => section.items.some((item) => item.href === pathname))?.id
-  }, [pathname])
+    return visibleMenuSections.find((section) =>
+      section.items.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
+    )?.id
+  }, [pathname, visibleMenuSections])
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections((prev) => ({
@@ -107,6 +128,19 @@ export default function AppShell({ user, pageTitle, pageSubtitle, children }: Ap
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: '/login' })
+  }
+
+  if (menuLayout === 'top') {
+    return (
+      <TopMenu
+        user={user}
+        pageTitle={pageTitle}
+        pageSubtitle={pageSubtitle}
+        menuSections={visibleMenuSections}
+      >
+        {children}
+      </TopMenu>
+    )
   }
 
   const sidebarContent = (
@@ -126,9 +160,27 @@ export default function AppShell({ user, pageTitle, pageSubtitle, children }: Ap
       </div>
 
       <nav className="flex-1 overflow-y-auto p-3 space-y-2">
-        {menuSections.map((section) => {
+        {visibleMenuSections.map((section) => {
           const isExpanded = expandedSections[section.id]
           const isActiveSection = section.id === sectionWithActiveItem
+          const isDirectSection = isDirectMenuSection(section)
+
+          if (isDirectSection) {
+            const directItem = section.items[0]
+            const isActive = pathname === directItem.href || pathname.startsWith(`${directItem.href}/`)
+
+            return (
+              <Link
+                key={section.id}
+                href={directItem.href}
+                onClick={() => setIsMobileSidebarOpen(false)}
+                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${menuUiConfig.sectionTextClass} ${menuUiConfig.sectionHoverClass} ${isActive ? 'bg-indigo-50 text-indigo-700' : ''}`}
+              >
+                <Icon name={section.icon} className="w-4 h-4" />
+                {!isSidebarCollapsed && <span>{section.label}</span>}
+              </Link>
+            )
+          }
 
           return (
             <div key={section.id} className="space-y-1">

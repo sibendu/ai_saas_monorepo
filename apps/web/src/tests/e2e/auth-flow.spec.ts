@@ -17,6 +17,35 @@ test('login page renders', async ({ page }) => {
   await expect(page.locator('#password')).toBeVisible()
 })
 
+test('email registration sends activation request', async ({ page }) => {
+  let registrationPayload: unknown
+
+  await page.route('**/api/register', async (route) => {
+    registrationPayload = route.request().postDataJSON()
+
+    await route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        message: 'Check your email for an activation link.',
+      }),
+    })
+  })
+
+  await page.goto('/register')
+  await demoPause(page)
+
+  await page.fill('#name', 'Activation User')
+  await page.fill('#email', 'activation@example.com')
+  await page.getByRole('button', { name: 'Send Activation Email' }).click()
+
+  await expect(page.getByText('Check your email for an activation link.')).toBeVisible()
+  expect(registrationPayload).toEqual({
+    name: 'Activation User',
+    email: 'activation@example.com',
+  })
+})
+
 test('login to dashboard with configured credentials', async ({ page }) => {
   test.skip(!process.env.E2E_LOGIN_EMAIL || !process.env.E2E_LOGIN_PASSWORD, 'E2E credentials not configured')
 

@@ -1,15 +1,13 @@
 import { NextResponse } from 'next/server'
-import { registerUser } from '@/lib/register'
+import { startEmailActivationRegistration } from '@/lib/activation-registration'
 
 export async function POST(req: Request) {
     try {
-        const { name, username, email, password } = await req.json()
+        const { name, email } = await req.json()
 
-        const result = await registerUser({
+        const result = await startEmailActivationRegistration({
             name,
-            username,
-            email,
-            password
+            email
         })
 
         if (!result.success) {
@@ -20,7 +18,7 @@ export async function POST(req: Request) {
         }
 
         return NextResponse.json(
-            { message: 'User registered successfully' },
+            { message: 'Check your email for an activation link.' },
             { status: 201 }
         )
     } catch (error) {

@@ -5,17 +5,18 @@ import { hashPasswordResetToken } from '@/lib/password-reset'
 
 export async function POST(req: Request) {
   try {
-    const { code, password, confirmPassword } = await req.json()
+    const { code, token, password, confirmPassword } = await req.json()
+    const resetToken = token ?? code
 
-    if (!code || !password || !confirmPassword) {
-      return NextResponse.json({ error: 'Code, password and confirm password are required' }, { status: 400 })
+    if (!resetToken || !password || !confirmPassword) {
+      return NextResponse.json({ error: 'Token, password and confirm password are required' }, { status: 400 })
     }
 
     if (password !== confirmPassword) {
       return NextResponse.json({ error: 'Passwords do not match' }, { status: 400 })
     }
 
-    const hashedCode = hashPasswordResetToken(code)
+    const hashedCode = hashPasswordResetToken(resetToken)
 
     const customer = await prisma.customer.findFirst({
       where: {

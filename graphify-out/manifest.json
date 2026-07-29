@@ -1,0 +1,302 @@
+{
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\bff\\package.json": {
+    "mtime": 1783513083.8079355,
+    "ast_hash": "cfc63e378223d86ff0bb603a7f5d757c",
+    "semantic_hash": "cfc63e378223d86ff0bb603a7f5d757c"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\bff\\src\\index.ts": {
+    "mtime": 1783513083.8092315,
+    "ast_hash": "1bdf290be1d93299b6c628417c8695b8",
+    "semantic_hash": "1bdf290be1d93299b6c628417c8695b8"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\bff\\src\\routes\\customers.ts": {
+    "mtime": 1783513083.8092315,
+    "ast_hash": "e1d06bdd33b1512010cc41a689403a26",
+    "semantic_hash": "e1d06bdd33b1512010cc41a689403a26"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\bff\\src\\routes\\dashboard.ts": {
+    "mtime": 1783513083.810234,
+    "ast_hash": "b3e86b39a2556de383eb7074b6e5694e",
+    "semantic_hash": "b3e86b39a2556de383eb7074b6e5694e"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\bff\\src\\routes\\tasks.ts": {
+    "mtime": 1783513083.8112335,
+    "ast_hash": "1ec012ab2b8eeb6c4e739a670bacf97a",
+    "semantic_hash": "1ec012ab2b8eeb6c4e739a670bacf97a"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\bff\\src\\tests\\integration\\api.integration.test.ts": {
+    "mtime": 1783513083.8122318,
+    "ast_hash": "7787747c6908a6fc10b86cfc19fae2f5",
+    "semantic_hash": "7787747c6908a6fc10b86cfc19fae2f5"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\bff\\src\\tests\\unit\\tasks.unit.test.ts": {
+    "mtime": 1783513083.8122318,
+    "ast_hash": "3930810e00ecc057dbbcf79147483042",
+    "semantic_hash": "3930810e00ecc057dbbcf79147483042"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\bff\\tsconfig.json": {
+    "mtime": 1783513083.8132322,
+    "ast_hash": "8b28edc94e84fdb5c4562a1c0d2391df",
+    "semantic_hash": "8b28edc94e84fdb5c4562a1c0d2391df"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\bff\\vitest.config.ts": {
+    "mtime": 1783513083.8132322,
+    "ast_hash": "bf99651183266b3693d3e6f2984b9db6",
+    "semantic_hash": "bf99651183266b3693d3e6f2984b9db6"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\next-env.d.ts": {
+    "mtime": 1783616623.6247845,
+    "ast_hash": "29f60a376e12bf72b67d4994fcc84214",
+    "semantic_hash": "29f60a376e12bf72b67d4994fcc84214"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\next.config.js": {
+    "mtime": 1783513083.8142316,
+    "ast_hash": "a8ae738bcbfc917fc215f4b8df0c27e5",
+    "semantic_hash": "a8ae738bcbfc917fc215f4b8df0c27e5"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\package.json": {
+    "mtime": 1783513083.8142316,
+    "ast_hash": "83992cb2d0aa9f731b0fccd55206521d",
+    "semantic_hash": "83992cb2d0aa9f731b0fccd55206521d"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\playwright.config.ts": {
+    "mtime": 1783513083.815233,
+    "ast_hash": "d8736ee36fde48ae1d3291061f2580ca",
+    "semantic_hash": "d8736ee36fde48ae1d3291061f2580ca"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\postcss.config.js": {
+    "mtime": 1783513083.815233,
+    "ast_hash": "762a94d1749c8e97eebf3f94102e8eb2",
+    "semantic_hash": "762a94d1749c8e97eebf3f94102e8eb2"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\prisma\\migrations\\20260228171658_add_registration_type\\migration.sql": {
+    "mtime": 1783513083.8162327,
+    "ast_hash": "59119ed76270c05f736fa3be9b6cede7",
+    "semantic_hash": "59119ed76270c05f736fa3be9b6cede7"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\prisma\\migrations\\20260228171816_add_registration_type\\migration.sql": {
+    "mtime": 1783513083.8162327,
+    "ast_hash": "8f8890e08331630f36fcc28c0a52ac84",
+    "semantic_hash": "8f8890e08331630f36fcc28c0a52ac84"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\prisma\\migrations\\20260302100000_add_task_table\\migration.sql": {
+    "mtime": 1783513083.8172321,
+    "ast_hash": "75a7f06e834e3703dc54279932fa72ec",
+    "semantic_hash": "75a7f06e834e3703dc54279932fa72ec"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\prisma\\prisma.config.ts": {
+    "mtime": 1783513083.8172321,
+    "ast_hash": "6d295508db04a1d12fb736e91f9e1f64",
+    "semantic_hash": "6d295508db04a1d12fb736e91f9e1f64"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\app\\api\\auth\\[...nextauth]\\auth-options.ts": {
+    "mtime": 1783513083.8194284,
+    "ast_hash": "649807aa8d395367c26dc3ee4c2427b0",
+    "semantic_hash": "649807aa8d395367c26dc3ee4c2427b0"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\app\\api\\auth\\[...nextauth]\\route.ts": {
+    "mtime": 1783513083.8194284,
+    "ast_hash": "8c76d4be4df1cb79a0ba33085e083030",
+    "semantic_hash": "8c76d4be4df1cb79a0ba33085e083030"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\app\\api\\auth\\forgot-password\\route.ts": {
+    "mtime": 1783513083.8194284,
+    "ast_hash": "11a506975084f4f588bee06de7f99d60",
+    "semantic_hash": "11a506975084f4f588bee06de7f99d60"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\app\\api\\auth\\reset-password\\route.ts": {
+    "mtime": 1783513083.8204286,
+    "ast_hash": "01c16a364c9383b9eb9575c386d6491e",
+    "semantic_hash": "01c16a364c9383b9eb9575c386d6491e"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\app\\api\\auth\\social-register-intent\\route.ts": {
+    "mtime": 1783513083.8214283,
+    "ast_hash": "a849c5e3c4e9b43323f699d4d1734794",
+    "semantic_hash": "a849c5e3c4e9b43323f699d4d1734794"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\app\\api\\preferences\\route.ts": {
+    "mtime": 1783513083.8224292,
+    "ast_hash": "c535c126024cc2f9b3d85a013346563d",
+    "semantic_hash": "c535c126024cc2f9b3d85a013346563d"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\app\\api\\register\\route.ts": {
+    "mtime": 1783513083.8224292,
+    "ast_hash": "9cda9d7fd7825fd44bfdeb662006b9e1",
+    "semantic_hash": "9cda9d7fd7825fd44bfdeb662006b9e1"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\app\\api\\tasks\\[taskId]\\route.ts": {
+    "mtime": 1783513083.823428,
+    "ast_hash": "4c7d599ceb315b322602114674ca8a97",
+    "semantic_hash": "4c7d599ceb315b322602114674ca8a97"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\app\\customers\\page.tsx": {
+    "mtime": 1783513083.823428,
+    "ast_hash": "8c782af7fb99a4405bd249e3534bd68e",
+    "semantic_hash": "8c782af7fb99a4405bd249e3534bd68e"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\app\\dashboard\\page.tsx": {
+    "mtime": 1783513083.8244288,
+    "ast_hash": "e63cfefa284bef69fac3bc7dfe9293a3",
+    "semantic_hash": "e63cfefa284bef69fac3bc7dfe9293a3"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\app\\forgot-password\\forgot-password.integration.test.tsx": {
+    "mtime": 1783513083.8244288,
+    "ast_hash": "1744b512b71ab861b9d19ca1db1a78e7",
+    "semantic_hash": "1744b512b71ab861b9d19ca1db1a78e7"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\app\\forgot-password\\page.tsx": {
+    "mtime": 1783513083.8254292,
+    "ast_hash": "e67d0e5760a9dfde0d2623e91faebcc1",
+    "semantic_hash": "e67d0e5760a9dfde0d2623e91faebcc1"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\app\\layout.tsx": {
+    "mtime": 1783513083.8264318,
+    "ast_hash": "82d309d956a9bbbb7d14e0ebc7358f0e",
+    "semantic_hash": "82d309d956a9bbbb7d14e0ebc7358f0e"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\app\\login\\page.tsx": {
+    "mtime": 1783513083.8274288,
+    "ast_hash": "37258ac6058ecb4aec4559fe0db740cc",
+    "semantic_hash": "37258ac6058ecb4aec4559fe0db740cc"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\app\\page.tsx": {
+    "mtime": 1783513083.8274288,
+    "ast_hash": "668de85caa73c0b29c5c701113e4e3e8",
+    "semantic_hash": "668de85caa73c0b29c5c701113e4e3e8"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\app\\preferences\\page.tsx": {
+    "mtime": 1783513083.8284295,
+    "ast_hash": "cc1786909d3073f0eb06a72b5f65befb",
+    "semantic_hash": "cc1786909d3073f0eb06a72b5f65befb"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\app\\register\\page.tsx": {
+    "mtime": 1783513083.8286247,
+    "ast_hash": "be72e9d3a2978e73f7e63c3e1c14e928",
+    "semantic_hash": "be72e9d3a2978e73f7e63c3e1c14e928"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\app\\reset-password\\page.tsx": {
+    "mtime": 1783513083.829626,
+    "ast_hash": "287660e08acd9a019fc653c584dba4cd",
+    "semantic_hash": "287660e08acd9a019fc653c584dba4cd"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\app\\tasks\\page.tsx": {
+    "mtime": 1783513083.829626,
+    "ast_hash": "64ef96ab871a24b56d0c2c90f1b83971",
+    "semantic_hash": "64ef96ab871a24b56d0c2c90f1b83971"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\components\\AppShell.tsx": {
+    "mtime": 1783513083.830626,
+    "ast_hash": "fc7b253d991a3f8532ab1b16a54bb078",
+    "semantic_hash": "fc7b253d991a3f8532ab1b16a54bb078"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\components\\AuthProvider.tsx": {
+    "mtime": 1783513083.830626,
+    "ast_hash": "122d9c49f4f0edc34dff2a80431ce732",
+    "semantic_hash": "122d9c49f4f0edc34dff2a80431ce732"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\components\\CustomersList.tsx": {
+    "mtime": 1783513083.831626,
+    "ast_hash": "f137bd07b3dff84255f938006ed0f2af",
+    "semantic_hash": "f137bd07b3dff84255f938006ed0f2af"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\components\\Header.tsx": {
+    "mtime": 1783513083.831626,
+    "ast_hash": "067ebc4e2fa34469bb96f0a6dc1f66f7",
+    "semantic_hash": "067ebc4e2fa34469bb96f0a6dc1f66f7"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\components\\TaskList.tsx": {
+    "mtime": 1783513083.831626,
+    "ast_hash": "680095b22731a365cc78c180e6882592",
+    "semantic_hash": "680095b22731a365cc78c180e6882592"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\config\\navigation.ts": {
+    "mtime": 1783513083.8326256,
+    "ast_hash": "49ef77582f6723291c82d4afd445f331",
+    "semantic_hash": "49ef77582f6723291c82d4afd445f331"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\lib\\password-reset.ts": {
+    "mtime": 1783513083.8336258,
+    "ast_hash": "bf82d0c2b8731f198f3bb6ec35cb81dc",
+    "semantic_hash": "bf82d0c2b8731f198f3bb6ec35cb81dc"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\lib\\password-reset.unit.test.ts": {
+    "mtime": 1783513083.8336258,
+    "ast_hash": "1aa5dc89729eebc06759d5dfa236c949",
+    "semantic_hash": "1aa5dc89729eebc06759d5dfa236c949"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\lib\\prisma.ts": {
+    "mtime": 1783513083.834626,
+    "ast_hash": "42d67d1f316b1beb0fe5bb9cd93f33ec",
+    "semantic_hash": "42d67d1f316b1beb0fe5bb9cd93f33ec"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\lib\\register.ts": {
+    "mtime": 1783513083.834626,
+    "ast_hash": "ab110a1efaedd5327336571aa077173d",
+    "semantic_hash": "ab110a1efaedd5327336571aa077173d"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\tests\\e2e\\auth-flow.spec.ts": {
+    "mtime": 1783513083.8356256,
+    "ast_hash": "18d487be889bf43917e935ddf4256f7b",
+    "semantic_hash": "18d487be889bf43917e935ddf4256f7b"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\tests\\msw\\handlers.ts": {
+    "mtime": 1783513083.8356256,
+    "ast_hash": "ed12085eb6a3e1aa920cd8bb3d982882",
+    "semantic_hash": "ed12085eb6a3e1aa920cd8bb3d982882"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\tests\\msw\\server.ts": {
+    "mtime": 1783513083.8366263,
+    "ast_hash": "38e27fd60f073128526b221510ac4343",
+    "semantic_hash": "38e27fd60f073128526b221510ac4343"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\tests\\setup.ts": {
+    "mtime": 1783513083.8366263,
+    "ast_hash": "fde9a5fd1b06ed5217a3e46d4f97da92",
+    "semantic_hash": "fde9a5fd1b06ed5217a3e46d4f97da92"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\tests\\unit\\AppShell.unit.test.tsx": {
+    "mtime": 1783513083.8366263,
+    "ast_hash": "f24523b6988a545528b90c9f7de039f7",
+    "semantic_hash": "f24523b6988a545528b90c9f7de039f7"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\tests\\unit\\AuthProvider.unit.test.tsx": {
+    "mtime": 1783513083.8376305,
+    "ast_hash": "a233dd27e7932a4afa0dfff14d228905",
+    "semantic_hash": "a233dd27e7932a4afa0dfff14d228905"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\tests\\unit\\CustomersList.unit.test.tsx": {
+    "mtime": 1783513083.8376305,
+    "ast_hash": "4b5271a4a65d5e7902312a037b7f77b3",
+    "semantic_hash": "4b5271a4a65d5e7902312a037b7f77b3"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\tests\\unit\\Header.unit.test.tsx": {
+    "mtime": 1783513083.8387265,
+    "ast_hash": "4ed3d7290c0e28a58838c9f1f3653ee8",
+    "semantic_hash": "4ed3d7290c0e28a58838c9f1f3653ee8"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\src\\tests\\unit\\TaskList.unit.test.tsx": {
+    "mtime": 1783513083.8389313,
+    "ast_hash": "735c1fb2dc8d8299a932f73f2c718095",
+    "semantic_hash": "735c1fb2dc8d8299a932f73f2c718095"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\tailwind.config.js": {
+    "mtime": 1783513083.8389313,
+    "ast_hash": "7ce849b6a78d0829011f37192c279faa",
+    "semantic_hash": "7ce849b6a78d0829011f37192c279faa"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\test_api_register.js": {
+    "mtime": 1783513083.8399324,
+    "ast_hash": "77a4a145e56c6a184febf6b6be30e7af",
+    "semantic_hash": "77a4a145e56c6a184febf6b6be30e7af"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\tsconfig.json": {
+    "mtime": 1783513083.8399324,
+    "ast_hash": "c929b3ec6ad4966a29404b4c7c9d373d",
+    "semantic_hash": "c929b3ec6ad4966a29404b4c7c9d373d"
+  },
+  "C:\\workspace\\AI\\ai_specdrivendev\\bmad\\saas_monorepo\\apps\\web\\vitest.config.ts": {
+    "mtime": 1783513083.8409324,
+    "ast_hash": "3a09ef5826e5ac405c234bfaa1a380f9",
+    "semantic_hash": "3a09ef5826e5ac405c234bfaa1a380f9"
+  }
+}

@@ -19,13 +19,17 @@
     "test:integration": "npm run test:integration --workspace=apps/web && npm run test:integration --workspace=apps/bff",
     "test:e2e": "npm run test:e2e --workspace=apps/web",
     "test:e2e:install": "npm run test:e2e:install --workspace=apps/web",
-    "test:all": "npm run test && npm run test:e2e"
+    "test:all": "npm run test && npm run test:e2e",
+    "db:validate": "npm exec --workspace=apps/web -- prisma validate",
+    "db:generate": "npm exec --workspace=apps/web -- prisma generate",
+    "db:migrate": "npm exec --workspace=apps/web -- prisma migrate dev",
+    "db:deploy": "npm exec --workspace=apps/web -- prisma migrate deploy",
+    "db:status": "npm exec --workspace=apps/web -- prisma migrate status",
+    "db:studio": "npm exec --workspace=apps/web -- prisma studio",
+    "db:seed": "npm run db:seed --workspace=apps/web"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
     "typescript": "^5.3.3"
-  },
-  "dependencies": {
-    "@prisma/client": "^7.4.2"
   }
 }

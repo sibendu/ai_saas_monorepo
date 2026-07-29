@@ -1,3 +1,4 @@
+import '../lib/load-env';
 import { Router, Request, Response } from 'express';
 import { Task, TasksResponse } from '@saas/shared-types';
 import { Pool } from 'pg';
@@ -61,6 +62,10 @@ const fallbackTasks: Task[] = [
 
 let fallbackTaskStore: Task[] = [...fallbackTasks];
 
+function isTestRuntime(): boolean {
+  return process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+}
+
 export function mapTaskRowToTask(row: TaskRow): Task {
   return {
     taskId: row.task_id,
@@ -113,7 +118,7 @@ async function getTasksFromTable(): Promise<Task[]> {
 
     return result.rows.map(mapTaskRowToTask);
   } catch (error) {
-    if (process.env.NODE_ENV === 'test') {
+    if (isTestRuntime()) {
       return fallbackTaskStore;
     }
 
@@ -122,7 +127,7 @@ async function getTasksFromTable(): Promise<Task[]> {
 }
 
 async function updateTaskInTable(taskId: string, payload: TaskUpdatePayload): Promise<Task | null> {
-  if (process.env.NODE_ENV === 'test') {
+  if (!pool || isTestRuntime()) {
     const index = fallbackTaskStore.findIndex((task) => task.taskId === taskId);
     if (index === -1) {
       return null;
@@ -170,7 +175,7 @@ async function updateTaskInTable(taskId: string, payload: TaskUpdatePayload): Pr
 }
 
 async function deleteTaskFromTable(taskId: string): Promise<boolean> {
-  if (process.env.NODE_ENV === 'test') {
+  if (!pool || isTestRuntime()) {
     const previousLength = fallbackTaskStore.length;
     fallbackTaskStore = fallbackTaskStore.filter((task) => task.taskId !== taskId);
     return fallbackTaskStore.length < previousLength;

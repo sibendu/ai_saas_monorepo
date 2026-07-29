@@ -1,0 +1,61 @@
+import AppShell from '@/components/AppShell'
+import AdminManagementTabs from '@/components/admin/AdminManagementTabs'
+import { requireAdminSession } from '@/lib/admin-auth'
+import { adminUserSelect, mapAdminUser } from '@/lib/admin-users'
+import { getAuthenticatedShellData } from '@/lib/role-menu'
+import { prisma } from '@/lib/prisma'
+import { AdminRoleSummary, AdminUserSummary } from '@saas/shared-types'
+
+async function getRoles(): Promise<AdminRoleSummary[]> {
+  const roles = await prisma.role.findMany({
+    orderBy: { name: 'asc' },
+    include: {
+      _count: {
+        select: {
+          users: true,
+          modules: true,
+        },
+      },
+    },
+  })
+
+  return roles.map((role) => ({
+    id: role.id.toString(),
+    name: role.name,
+    description: role.description,
+    userCount: role._count.users,
+    moduleCount: role._count.modules,
+    createdAt: role.createdAt.toISOString(),
+    updatedAt: role.updatedAt.toISOString(),
+  }))
+}
+
+async function getUsers(): Promise<AdminUserSummary[]> {
+  const users = await prisma.customer.findMany({
+    orderBy: { email: 'asc' },
+    select: adminUserSelect,
+  })
+
+  return users.map(mapAdminUser)
+}
+
+export default async function AdminPage() {
+  await requireAdminSession()
+  const [{ session, menuSections, menuLayout }, roles, users] = await Promise.all([
+    getAuthenticatedShellData(),
+    getRoles(),
+    getUsers(),
+  ])
+
+  return (
+    <AppShell
+      user={session.user}
+      menuSections={menuSections}
+      menuLayout={menuLayout}
+      pageTitle="Admin"
+      pageSubtitle="Manage access, roles, and permissions"
+    >
+      <AdminManagementTabs initialRoles={roles} initialUsers={users} />
+    </AppShell>
+  )
+}

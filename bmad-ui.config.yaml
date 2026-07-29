@@ -1,0 +1,5 @@
+documentation:
+  includeFolders:
+    - docs
+    - _bmad-output
+    - design-artifacts

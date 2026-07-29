@@ -1,0 +1,42 @@
+For Blackline project, I would like to test and harden code forward-generation steps  with what I have currently under evidences for 4 Cash & Bank standards.
+
+The evidences extracted so far for 4 Cash & Banks standards are - 
+  
+There are gaps and open questions in these cash & bank standards, feedbacks awaited. But let us pretend that these are final. 
+
+The next steps in the workflow should be -
+
+1. Define target architecture and architecture decisions - because this will determine how requirements will be implemented, using which runtime.
+For Blackline, there will two broad layers:
+
+1.1 - Azure Data Bricks - Data extracted from SAP will be stored in Azure DataLake, which will be processed using Azure Data Bricks and Python rules. These will check for 4 rules as specified in 4 Cash & Bank standards. In final solution it will cover all BSAR rules, all 147 standards. The output of the rules will be stored in the tables. Spo technically it is Python rules running on Azure Databricks as a batch process using a series of database tables (input and output), checking GL records against the rules.   
+
+1.2 - Web application - once the GL records are processed by Azure Databricks rules batch, it will be available for the manual wreview and workflow by accoutning specialist via the web applicaiton. This web application will support all finance workflow steps, along with user/role management and other associated features. 
+Technically, it will consists of following sub-tiers:
+1.2.1 - UI built using Next.js
+1.2.2 - Backend server-side logic built as Microservices on Kubernetes (our ITaaP architecture) - using Python 
+1.2.3 - a database for managing user, role, state etc of the web application  
+  
+
+2. Once the architetcure is defined, the next step I want to do in the workflow is process the extracted evidences for 4 Cash & Bank standards to convert them into requirements , which are neatly organized and classified as per the above architecture taxonomy i.e. requirement statements clearly groups as batch rules (candidates for Azure Databricks), web (canidates for web app, furhter classified into front-end of backend or database) 
+
+3. After both Step 1 and 2 are complete, I want to test code generation of the rules. Initial pass only for Azure Databricks python part. 
+
+Since the evidences are incomplete (accordingly requirements too will be incomplete), the code generation will not be 100% perfect. But I want to test and harden these steps, identify potential areas of improvements. 
+ 
+
+ 
+
+(UI in NExt.js and backend in ITaaP microservice on Kubernetes) will allow manual workflow to review these results, further manipulate/approve/reject and finalize the GL records. For the time being let us only focus on the Databricks Pyspark rules , and ignore the UI/workflow parts of the requirements. Please scan these evidence files thoroughly and recommend practical  steps to forward-engineer to generate the Pyspark notebook. I am also providijng a sample 
+
+2. Extract the requirements from these evidence and structure/group them first-level as per architecture  
+
+ 
+
+In order to generate code, 
+
+
+
+the notebook code done by the human developer is in [Cash and Bank.ipynb](agentic-sdlc-data/tenants/default/projects/blackline-migration/repo/work/Cash and Bank.ipynb)
+
+Pythron Databricks notebook whichis created by human developer for same set of cash & bank standarrds. Use this to determine the tables/field name and other details whereever possible. Do not generate any code yet, I am looking for wat are the steps I need to follow to achieve successful code generation of Python databricks rules given the current shape of evidences (kepeing the final output in mind that should be similar to the code in notebook).

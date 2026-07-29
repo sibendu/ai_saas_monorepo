@@ -12,8 +12,10 @@
     "test:integration": "vitest run --passWithNoTests integration.test"
   },
   "dependencies": {
+    "@prisma/client": "6.19.2",
     "@saas/shared-types": "*",
     "cors": "^2.8.5",
+    "dotenv": "16.6.1",
     "express": "^4.18.2",
     "helmet": "^7.1.0",
     "morgan": "^1.10.0",

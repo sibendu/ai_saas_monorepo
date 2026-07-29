@@ -269,6 +269,136 @@ REDIS_URL=redis://redis.internal:6379
 
 ---
 
+## Database Encryption At Rest
+
+### Phase 1 Strategy
+
+The Phase 1 production default is infrastructure or provider-managed encryption for
+PostgreSQL database storage. Enable and verify encryption for:
+
+- Primary database storage volumes
+- Automated backups
+- Manual snapshots
+- Read replicas
+- Database logs where the provider stores them with the database service
+- Local and non-production database volumes when they hold realistic or sensitive data
+
+Do not add application-managed column encryption unless a concrete plaintext sensitive column
+requires confidentiality from storage administrators or database readers. Existing searchable and
+profile fields should remain queryable. Passwords and reset or activation tokens are already
+one-way values and must not be converted into decryptable ciphertext.
+
+`pgcrypto` is a future option for specific plaintext sensitive fields that need column-level
+encryption. If it is introduced later, keep key material in an external KMS, Key Vault, Secret
+Manager, or equivalent runtime integration. Do not store encryption keys in the database,
+application source, Docker image layers, `DATABASE_URL`, plaintext Kubernetes manifests, or
+committed environment files.
+
+Local PostgreSQL is not production encryption by itself. Treat local development as encrypted only
+when the host disk, database data directory, or Docker/PostgreSQL volume is encrypted by the host or
+storage provider.
+
+References:
+
+- PostgreSQL encryption options: <https://www.postgresql.org/docs/current/encryption-options.html>
+- PostgreSQL `pgcrypto`: <https://www.postgresql.org/docs/current/pgcrypto.html>
+
+### Managed PostgreSQL Requirements
+
+AWS RDS PostgreSQL deployments must enable RDS encryption at rest with AWS KMS before launch. RDS
+encryption covers DB instance storage, automated backups, read replicas, logs, and snapshots for
+encrypted instances. Use the AWS guide for exact setup and region/account constraints:
+<https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html>
+
+Azure Database for PostgreSQL uses service-managed key encryption by default. Use customer-managed
+keys when tenant policy, regulatory controls, or key ownership requirements demand them. Use the
+Azure guide for setup and operational constraints:
+<https://learn.microsoft.com/en-us/azure/postgresql/security/security-data-encryption>
+
+For any managed provider, collect launch evidence from the provider console, CLI, or policy scan
+showing that database storage, backups, snapshots, replicas, and retained logs are encrypted.
+
+### Kubernetes and Self-Hosted PostgreSQL
+
+No checked-in `k8s/` directory exists yet, so these snippets are deployment guidance rather than a
+complete Kubernetes stack. When Story 8.3 adds generic manifests, the PostgreSQL data volume must
+use an encrypted storage class or a provider-managed encrypted disk.
+
+Kubernetes Secret API encryption protects API objects such as Secret resources in etcd. It does not
+encrypt mounted PostgreSQL data files under the database data directory. Configure both controls
+when running PostgreSQL in Kubernetes: enable Kubernetes API encryption for Secret objects and use
+encrypted PersistentVolume storage for the database files.
+
+Example encrypted StorageClass and PostgreSQL PVC shape:
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: encrypted-postgres
+provisioner: <provider-csi-driver>
+parameters:
+  encrypted: "true"
+  kmsKeyId: <provider-kms-key-id>
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: encrypted-postgres
+  resources:
+    requests:
+      storage: 20Gi
+```
+
+For self-hosted PostgreSQL outside Kubernetes, encrypt the underlying disk, logical volume, or
+filesystem that stores the PostgreSQL data directory and verify backup/snapshot encryption in the
+backup system.
+
+### Current Sensitive-Data Storage Behavior
+
+The current schema does not need migration for this story:
+
+- `apps/web/src/lib/password-reset.ts` generates raw reset and activation links for email delivery
+  and stores only SHA-256 hashes of the token values.
+- `apps/web/src/app/api/auth/reset-password/route.ts` hashes new passwords with bcrypt before
+  saving them.
+- `apps/web/prisma/seed.js` bcrypt-hashes seeded user passwords.
+- `apps/web/prisma/schema.prisma` stores `Customer.password` and `Customer.passwordResetToken` as
+  strings, but those fields contain bcrypt password hashes and SHA-256 token hashes respectively,
+  not plaintext values.
+
+Do not decrypt or reverse password values, reset tokens, or activation tokens. They are one-way
+verification values. Raw reset or activation links logged when email environment variables are
+missing are development-only fallback output and must not be used as a production email
+configuration.
+
+### Operator Verification Checklist
+
+- [ ] Provider or cluster evidence shows primary PostgreSQL storage encryption is enabled.
+- [ ] Automated backups are encrypted and recoverable.
+- [ ] Manual snapshots are encrypted and cannot be created unencrypted by default.
+- [ ] Read replicas inherit or explicitly enable database storage encryption.
+- [ ] Database logs retained by the provider or logging pipeline are encrypted at rest.
+- [ ] Kubernetes or self-hosted PostgreSQL uses encrypted PersistentVolume, disk, filesystem, or
+      storage-provider encryption for the data directory.
+- [ ] Kubernetes Secret API encryption is enabled when Kubernetes Secrets store database credentials,
+      and the team understands that this does not encrypt mounted PostgreSQL data files.
+- [ ] Encryption keys are stored in KMS, Key Vault, Secret Manager, or storage-provider key
+      management, not in the database, source-controlled files, Docker image layers, or plaintext
+      manifests.
+- [ ] Local and non-production databases that hold realistic or sensitive data use encrypted host
+      disks or encrypted database volumes.
+- [ ] Production email configuration sends reset and activation links through the configured mail
+      provider and does not rely on console-logged links.
+
+---
+
 ## Security Checklist
 
 ### Before Deploying to Production
@@ -282,8 +412,9 @@ REDIS_URL=redis://redis.internal:6379
 - [ ] **Rate Limiting**: Add to BFF (express-rate-limit)
 - [ ] **Logging**: Set up CloudWatch/DataDog/Sentry
 - [ ] **Monitoring**: Health checks, alerts
-- [ ] **Database**: Connection pooling, read replicas
-- [ ] **Backups**: Automated database backups
+- [ ] **Database**: Connection pooling, read replicas, and verified encryption at rest
+- [ ] **Backups**: Automated encrypted database backups and snapshots
+- [ ] **Encryption evidence**: Complete the Database Encryption At Rest operator checklist
 
 ---
 

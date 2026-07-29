@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI Loop Project Configuration",
+  "type": "object",
+  "required": ["version", "project", "verification"],
+  "properties": {
+    "version": { "const": 1 },
+    "project": {
+      "type": "object",
+      "required": ["name", "architecture"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "architecture": { "type": "string", "minLength": 1 }
+      }
+    },
+    "environment": { "type": "object" },
+    "application": { "type": "object" },
+    "database": { "type": "object" },
+    "browser": { "type": "object" },
+    "concurrency": { "type": "object" },
+    "integration": { "type": "object" },
+    "verification": { "type": "object" }
+  }
+}
