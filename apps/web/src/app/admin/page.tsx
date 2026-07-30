@@ -1,10 +1,11 @@
 import AppShell from '@/components/AppShell'
 import AdminManagementTabs from '@/components/admin/AdminManagementTabs'
 import { requireAdminSession } from '@/lib/admin-auth'
+import { mapAdminModules, moduleWithSubModulesSelect } from '@/lib/admin-modules'
 import { adminUserSelect, mapAdminUser } from '@/lib/admin-users'
 import { getAuthenticatedShellData } from '@/lib/role-menu'
 import { prisma } from '@/lib/prisma'
-import { AdminRoleSummary, AdminUserSummary } from '@saas/shared-types'
+import { AdminModuleSummary, AdminRoleSummary, AdminUserSummary } from '@saas/shared-types'
 
 interface AdminRoleWithCounts {
   id: number
@@ -51,12 +52,22 @@ async function getUsers(): Promise<AdminUserSummary[]> {
   return users.map(mapAdminUser)
 }
 
+async function getModules(): Promise<AdminModuleSummary[]> {
+  const modules = await prisma.module.findMany({
+    orderBy: { label: 'asc' },
+    select: moduleWithSubModulesSelect,
+  })
+
+  return mapAdminModules(modules)
+}
+
 export default async function AdminPage() {
   await requireAdminSession()
-  const [{ session, menuSections, menuLayout }, roles, users] = await Promise.all([
+  const [{ session, menuSections, menuLayout }, roles, users, modules] = await Promise.all([
     getAuthenticatedShellData(),
     getRoles(),
     getUsers(),
+    getModules(),
   ])
 
   return (
@@ -67,7 +78,7 @@ export default async function AdminPage() {
       pageTitle="Admin"
       pageSubtitle="Manage access, roles, and permissions"
     >
-      <AdminManagementTabs initialRoles={roles} initialUsers={users} />
+      <AdminManagementTabs initialRoles={roles} initialUsers={users} initialModules={modules} />
     </AppShell>
   )
 }

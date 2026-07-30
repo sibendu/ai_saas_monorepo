@@ -1,7 +1,5 @@
 import { Router, Request, Response } from 'express';
 import { AllowedModule, Role, UserRolesResponse } from '@saas/shared-types';
-import { getPrismaClient } from '../lib/prisma';
-import type { PrismaClient } from '../lib/prisma';
 
 interface UserRoleWithAccess {
   role: {
@@ -23,6 +21,35 @@ interface UserRoleWithAccess {
       } | null;
     }>;
   };
+}
+
+interface RolesPrismaClient {
+  userRole: {
+    findMany(args: {
+      where: {
+        customer: {
+          email: string;
+        };
+      };
+      include: {
+        role: {
+          include: {
+            modules: {
+              include: {
+                module: true;
+                subModule: true;
+              };
+            };
+          };
+        };
+      };
+    }): Promise<unknown[]>;
+  };
+}
+
+async function getRolesPrismaClient(): Promise<RolesPrismaClient> {
+  const { getPrismaClient } = await import('../lib/prisma');
+  return getPrismaClient();
 }
 
 function toSharedRole(role: UserRoleWithAccess['role']): Role {
@@ -75,7 +102,7 @@ export function resolveAllowedModules(userRoles: UserRoleWithAccess[]): AllowedM
   );
 }
 
-export function createRolesRouter(prismaClient?: PrismaClient) {
+export function createRolesRouter(prismaClient?: RolesPrismaClient) {
   const router = Router();
 
   router.get('/user/roles', async (req: Request, res: Response) => {
@@ -91,7 +118,7 @@ export function createRolesRouter(prismaClient?: PrismaClient) {
         } satisfies UserRolesResponse);
       }
 
-      const client = prismaClient ?? getPrismaClient();
+      const client = prismaClient ?? (await getRolesPrismaClient());
       const userRoles = (await client.userRole.findMany({
         where: {
           customer: {

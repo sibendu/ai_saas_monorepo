@@ -1,6 +1,11 @@
 import express from 'express';
 import request from 'supertest';
 import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('../../lib/prisma', () => ({
+  getPrismaClient: vi.fn(),
+}));
+
 import { createRolesRouter, resolveAllowedModules } from '../../routes/roles';
 
 function createRolesTestApp(prismaClient: unknown) {

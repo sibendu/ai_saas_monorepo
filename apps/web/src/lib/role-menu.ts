@@ -22,6 +22,56 @@ function normalizeIcon(icon: string | null | undefined, fallback: MenuIconKey): 
   return icon && knownMenuIcons.has(icon as MenuIconKey) ? (icon as MenuIconKey) : fallback
 }
 
+function isOptionalString(value: unknown): value is string | null | undefined {
+  return value === undefined || value === null || typeof value === 'string'
+}
+
+function isAllowedSubModule(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+
+  const subModule = value as Record<string, unknown>
+
+  return (
+    typeof subModule.id === 'string' &&
+    typeof subModule.label === 'string' &&
+    typeof subModule.href === 'string' &&
+    isOptionalString(subModule.icon)
+  )
+}
+
+function isAllowedModule(value: unknown): value is AllowedModule {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+
+  const module = value as Record<string, unknown>
+
+  return (
+    typeof module.id === 'string' &&
+    typeof module.label === 'string' &&
+    isOptionalString(module.icon) &&
+    isOptionalString(module.href) &&
+    Array.isArray(module.subModules) &&
+    module.subModules.every(isAllowedSubModule)
+  )
+}
+
+function isSuccessfulUserRolesResponse(payload: unknown): payload is UserRolesResponse {
+  if (typeof payload !== 'object' || payload === null) {
+    return false
+  }
+
+  const response = payload as Record<string, unknown>
+
+  return (
+    response.success === true &&
+    Array.isArray(response.modules) &&
+    response.modules.every(isAllowedModule)
+  )
+}
+
 function getRoleMenuUrls(): string[] {
   const configuredUrls = [
     process.env.BFF_INTERNAL_URL,
@@ -82,10 +132,16 @@ export async function getAllowedMenuSections(email: string | null | undefined): 
         continue
       }
 
-      const payload = (await response.json()) as UserRolesResponse
+      const payload: unknown = await response.json()
+
+      if (!isSuccessfulUserRolesResponse(payload)) {
+        console.error('Invalid role menu payload:', bffUrl)
+        continue
+      }
+
       const allowedMenuSections = mapAllowedModulesToMenuSections(payload.modules)
 
-      return allowedMenuSections.length > 0 ? allowedMenuSections : menuSections
+      return allowedMenuSections
     } catch (error) {
       console.error('Error fetching role menu:', bffUrl, error)
     }
