@@ -446,6 +446,45 @@ describe('admin role module mapping API', () => {
     consoleLogSpy.mockRestore()
   })
 
+  it('replaces mappings transactionally for top-level module access only', async () => {
+    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined)
+    roleFindUniqueMock.mockResolvedValue({ id: 2, name: 'Sales' })
+    moduleFindManyMock.mockResolvedValue([{ id: 3 }, { id: 1 }])
+
+    const response = await PUT(
+      putRequest({ moduleIds: ['3', '1'], subModuleIds: [] }),
+      routeContext('2')
+    )
+
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: {
+        roleId: '2',
+        moduleIds: ['1', '3'],
+        subModuleIds: [],
+      },
+      message: 'Role module access updated successfully',
+    })
+    expect(response.status).toBe(200)
+    expect(subModuleFindManyMock).not.toHaveBeenCalled()
+    expect(transactionMock).toHaveBeenCalledTimes(1)
+    expect(txRoleModuleDeleteManyMock).toHaveBeenCalledWith({ where: { roleId: 2 } })
+    expect(txRoleModuleCreateManyMock).toHaveBeenCalledWith({
+      data: [
+        { roleId: 2, moduleId: 1, subModuleId: null },
+        { roleId: 2, moduleId: 3, subModuleId: null },
+      ],
+    })
+    expect(consoleLogSpy).toHaveBeenCalledWith('Admin role module access updated:', {
+      actorEmail: 'admin@example.com',
+      roleId: 2,
+      moduleIds: ['1', '3'],
+      subModuleIds: [],
+    })
+
+    consoleLogSpy.mockRestore()
+  })
+
   it('replaces mappings transactionally for mixed module and sub-module access', async () => {
     const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined)
     roleFindUniqueMock.mockResolvedValue({ id: 2, name: 'Sales' })
@@ -464,8 +503,8 @@ describe('admin role module mapping API', () => {
       success: true,
       data: {
         roleId: '2',
-        moduleIds: ['3', '1'],
-        subModuleIds: ['12', '10'],
+        moduleIds: ['1', '3'],
+        subModuleIds: ['10', '12'],
       },
       message: 'Role module access updated successfully',
     })
@@ -474,17 +513,17 @@ describe('admin role module mapping API', () => {
     expect(txRoleModuleDeleteManyMock).toHaveBeenCalledWith({ where: { roleId: 2 } })
     expect(txRoleModuleCreateManyMock).toHaveBeenCalledWith({
       data: [
-        { roleId: 2, moduleId: 3, subModuleId: null },
         { roleId: 2, moduleId: 1, subModuleId: null },
-        { roleId: 2, moduleId: 3, subModuleId: 12 },
+        { roleId: 2, moduleId: 3, subModuleId: null },
         { roleId: 2, moduleId: 1, subModuleId: 10 },
+        { roleId: 2, moduleId: 3, subModuleId: 12 },
       ],
     })
     expect(consoleLogSpy).toHaveBeenCalledWith('Admin role module access updated:', {
       actorEmail: 'admin@example.com',
       roleId: 2,
-      moduleIds: ['3', '1'],
-      subModuleIds: ['12', '10'],
+      moduleIds: ['1', '3'],
+      subModuleIds: ['10', '12'],
     })
     expect(Object.keys(consoleLogSpy.mock.calls[0][1])).toEqual([
       'actorEmail',

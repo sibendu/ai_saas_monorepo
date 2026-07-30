@@ -63,6 +63,23 @@ describe('admin modules API', () => {
     expect(moduleFindManyMock).not.toHaveBeenCalled()
   })
 
+  it('rejects unauthenticated callers before listing modules', async () => {
+    getAdminAuthorizationMock.mockResolvedValue({
+      isAuthorized: false,
+      status: 401,
+      error: 'Unauthorized',
+    })
+
+    const response = await route.GET()
+
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: 'Unauthorized',
+    })
+    expect(response.status).toBe(401)
+    expect(moduleFindManyMock).not.toHaveBeenCalled()
+  })
+
   it('returns sorted module summaries with nested sorted sub-modules', async () => {
     authorizeAdmin()
     moduleFindManyMock.mockResolvedValue([

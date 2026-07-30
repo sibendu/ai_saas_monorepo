@@ -1,5 +1,5 @@
 import type { Prisma } from '@prisma/client'
-import {
+import type {
   AdminModuleSummary,
   AdminRoleModuleMappingData,
   AdminSubModuleSummary,
@@ -120,5 +120,5 @@ export function normalizePositiveIntegerStringIds(value: unknown): number[] | nu
     normalizedIds.push(parsedId)
   }
 
-  return normalizedIds
+  return normalizedIds.sort((left, right) => left - right)
 }

@@ -195,6 +195,8 @@ export async function PUT(request: Request, context: RouteContext): Promise<Next
       if (hasParentMismatch) {
         return jsonError('Sub-module does not belong to a selected module', 400)
       }
+
+      selectedSubModules = selectedSubModules.sort((left, right) => left.id - right.id)
     }
 
     if (role.name.toLowerCase() === 'admin' && moduleIds.length === 0 && subModuleIds.length === 0) {

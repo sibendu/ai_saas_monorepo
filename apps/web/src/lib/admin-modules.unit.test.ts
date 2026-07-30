@@ -147,8 +147,8 @@ describe('admin module helpers', () => {
     }
   })
 
-  it('normalizes arrays of unique positive integer strings', () => {
-    expect(normalizePositiveIntegerStringIds(['1', '2'])).toEqual([1, 2])
+  it('normalizes arrays of unique positive integer strings into stable sorted ids', () => {
+    expect(normalizePositiveIntegerStringIds(['2', '1'])).toEqual([1, 2])
     expect(normalizePositiveIntegerStringIds([])).toEqual([])
 
     for (const invalidIds of [
