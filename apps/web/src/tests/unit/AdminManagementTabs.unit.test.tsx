@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
+import { server } from '@/tests/msw/server'
 import AdminManagementTabs from '@/components/admin/AdminManagementTabs'
 
 const initialRoles = [
@@ -46,6 +48,18 @@ const initialModules = [
 describe('AdminManagementTabs', () => {
   it('switches between roles, users, and enabled modules tabs', async () => {
     const user = userEvent.setup()
+    server.use(
+      http.get('*/api/admin/roles/1/modules', async () =>
+        HttpResponse.json({
+          success: true,
+          data: {
+            roleId: '1',
+            moduleIds: ['3'],
+            subModuleIds: ['4'],
+          },
+        })
+      )
+    )
 
     render(
       <AdminManagementTabs

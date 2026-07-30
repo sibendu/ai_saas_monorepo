@@ -297,9 +297,21 @@ describe('admin role module mapping API', () => {
   it.each([
     [{ moduleIds: ['1', '1'], subModuleIds: [] }, 'Module ids must be unique positive integers'],
     [{ moduleIds: ['0'], subModuleIds: [] }, 'Module ids must be unique positive integers'],
+    [{ moduleIds: ['1.5'], subModuleIds: [] }, 'Module ids must be unique positive integers'],
+    [{ moduleIds: ['01'], subModuleIds: [] }, 'Module ids must be unique positive integers'],
+    [
+      { moduleIds: ['9007199254740992'], subModuleIds: [] },
+      'Module ids must be unique positive integers',
+    ],
     [{ moduleIds: [1], subModuleIds: [] }, 'Module ids must be unique positive integers'],
     [{ moduleIds: ['1'], subModuleIds: ['2', '2'] }, 'Sub-module ids must be unique positive integers'],
     [{ moduleIds: ['1'], subModuleIds: ['-2'] }, 'Sub-module ids must be unique positive integers'],
+    [{ moduleIds: ['1'], subModuleIds: ['2.5'] }, 'Sub-module ids must be unique positive integers'],
+    [{ moduleIds: ['1'], subModuleIds: ['02'] }, 'Sub-module ids must be unique positive integers'],
+    [
+      { moduleIds: ['1'], subModuleIds: ['9007199254740992'] },
+      'Sub-module ids must be unique positive integers',
+    ],
     [{ moduleIds: ['1'], subModuleIds: [2] }, 'Sub-module ids must be unique positive integers'],
   ])('rejects invalid or duplicate mapping ids %#', async (body, expectedError) => {
     const response = await PUT(putRequest(body), routeContext('2'))
