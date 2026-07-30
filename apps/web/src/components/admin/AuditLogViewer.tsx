@@ -6,8 +6,8 @@ import type {
   AdminAuditEntityType,
   AdminAuditLogSummary,
   AdminAuditLogsData,
-  ApiResponse,
 } from '@saas/shared-types'
+import { readApiResponse } from '@/lib/client-api'
 
 const actionOptions: Array<{ value: AdminAuditAction; label: string }> = [
   { value: 'ROLE_CREATED', label: 'Role created' },
@@ -125,7 +125,10 @@ export default function AuditLogViewer() {
       const response = await fetch(`/api/admin/audit-logs?${searchParams.toString()}`, {
         cache: 'no-store',
       })
-      const payload = (await response.json()) as ApiResponse<AdminAuditLogsData>
+      const payload = await readApiResponse<AdminAuditLogsData>(
+        response,
+        'Failed to fetch audit logs'
+      )
 
       if (!response.ok || !payload.success || !payload.data) {
         throw new Error(payload.error ?? 'Failed to fetch audit logs')

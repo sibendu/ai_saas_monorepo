@@ -6,8 +6,8 @@ import {
   AdminRoleModuleMappingData,
   AdminRoleModuleMappingRequest,
   AdminRoleSummary,
-  ApiResponse,
 } from '@saas/shared-types'
+import { readApiResponse } from '@/lib/client-api'
 
 interface RoleModuleManagementProps {
   initialRoles: AdminRoleSummary[]
@@ -22,10 +22,6 @@ interface MappingSelection {
 const emptySelection: MappingSelection = {
   moduleIds: [],
   subModuleIds: [],
-}
-
-async function readApiResponse<T>(response: Response): Promise<ApiResponse<T>> {
-  return (await response.json()) as ApiResponse<T>
 }
 
 function sortStringIds(ids: string[]): string[] {
@@ -87,7 +83,10 @@ export default function RoleModuleManagement({
         const response = await fetch(`/api/admin/roles/${roleId}/modules`, {
           cache: 'no-store',
         })
-        const payload = await readApiResponse<AdminRoleModuleMappingData>(response)
+        const payload = await readApiResponse<AdminRoleModuleMappingData>(
+          response,
+          'Failed to load role module access'
+        )
 
         if (!response.ok || !payload.success || !payload.data) {
           throw new Error(payload.error ?? 'Failed to load role module access')
@@ -198,7 +197,10 @@ export default function RoleModuleManagement({
         },
         body: JSON.stringify(requestBody),
       })
-      const payload = await readApiResponse<AdminRoleModuleMappingData>(response)
+      const payload = await readApiResponse<AdminRoleModuleMappingData>(
+        response,
+        'Failed to update role module access'
+      )
 
       if (!response.ok || !payload.success || !payload.data) {
         throw new Error(payload.error ?? 'Failed to update role module access')

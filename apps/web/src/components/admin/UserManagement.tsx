@@ -6,8 +6,8 @@ import {
   AdminUserMutationRequest,
   AdminUserRoleAssignmentRequest,
   AdminUserSummary,
-  ApiResponse,
 } from '@saas/shared-types'
+import { readApiResponse } from '@/lib/client-api'
 
 interface UserManagementProps {
   initialUsers: AdminUserSummary[]
@@ -24,10 +24,6 @@ const emptyForm: UserFormState = {
   email: '',
   name: '',
   company: '',
-}
-
-async function readApiResponse<T>(response: Response): Promise<ApiResponse<T>> {
-  return (await response.json()) as ApiResponse<T>
 }
 
 function createFormState(user: AdminUserSummary): UserFormState {
@@ -82,7 +78,7 @@ export default function UserManagement({ initialUsers, availableRoles }: UserMan
         },
         body: JSON.stringify(requestBody),
       })
-      const payload = await readApiResponse<AdminUserSummary>(response)
+      const payload = await readApiResponse<AdminUserSummary>(response, 'Failed to update user')
 
       if (!response.ok || !payload.success || !payload.data) {
         throw new Error(payload.error ?? 'Failed to update user')
@@ -144,7 +140,10 @@ export default function UserManagement({ initialUsers, availableRoles }: UserMan
         },
         body: JSON.stringify(requestBody),
       })
-      const payload = await readApiResponse<AdminUserSummary>(response)
+      const payload = await readApiResponse<AdminUserSummary>(
+        response,
+        'Failed to update user roles'
+      )
 
       if (!response.ok || !payload.success || !payload.data) {
         throw new Error(payload.error ?? 'Failed to update user roles')

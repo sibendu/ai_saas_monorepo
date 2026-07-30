@@ -1,7 +1,8 @@
 'use client'
 
 import { FormEvent, useMemo, useState } from 'react'
-import { ApiResponse, AdminRoleMutationRequest, AdminRolesData, AdminRoleSummary } from '@saas/shared-types'
+import { AdminRoleMutationRequest, AdminRolesData, AdminRoleSummary } from '@saas/shared-types'
+import { readApiResponse } from '@/lib/client-api'
 
 interface RoleManagementProps {
   initialRoles: AdminRoleSummary[]
@@ -15,10 +16,6 @@ interface RoleFormState {
 const emptyForm: RoleFormState = {
   name: '',
   description: '',
-}
-
-async function readApiResponse<T>(response: Response): Promise<ApiResponse<T>> {
-  return (await response.json()) as ApiResponse<T>
 }
 
 export default function RoleManagement({ initialRoles }: RoleManagementProps) {
@@ -37,7 +34,7 @@ export default function RoleManagement({ initialRoles }: RoleManagementProps) {
 
   async function refreshRoles() {
     const response = await fetch('/api/admin/roles', { cache: 'no-store' })
-    const payload = await readApiResponse<AdminRolesData>(response)
+    const payload = await readApiResponse<AdminRolesData>(response, 'Failed to refresh roles')
 
     if (!response.ok || !payload.success || !payload.data) {
       throw new Error(payload.error ?? 'Failed to refresh roles')
@@ -64,7 +61,7 @@ export default function RoleManagement({ initialRoles }: RoleManagementProps) {
         },
         body: JSON.stringify(requestBody),
       })
-      const payload = await readApiResponse<AdminRoleSummary>(response)
+      const payload = await readApiResponse<AdminRoleSummary>(response, 'Failed to create role')
 
       if (!response.ok || !payload.success || !payload.data) {
         throw new Error(payload.error ?? 'Failed to create role')
@@ -97,7 +94,7 @@ export default function RoleManagement({ initialRoles }: RoleManagementProps) {
         },
         body: JSON.stringify(requestBody),
       })
-      const payload = await readApiResponse<AdminRoleSummary>(response)
+      const payload = await readApiResponse<AdminRoleSummary>(response, 'Failed to update role')
 
       if (!response.ok || !payload.success || !payload.data) {
         throw new Error(payload.error ?? 'Failed to update role')
@@ -131,7 +128,7 @@ export default function RoleManagement({ initialRoles }: RoleManagementProps) {
       const response = await fetch(`/api/admin/roles/${role.id}`, {
         method: 'DELETE',
       })
-      const payload = await readApiResponse<{ id: string }>(response)
+      const payload = await readApiResponse<{ id: string }>(response, 'Failed to delete role')
 
       if (!response.ok || !payload.success) {
         throw new Error(payload.error ?? 'Failed to delete role')
