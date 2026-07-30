@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { ApiResponse, AdminRoleMutationRequest, AdminRolesData, AdminRoleSummary } from '@saas/shared-types'
+import { writeAdminAuditLog } from '@/lib/admin-audit'
 import { getAdminAuthorization } from '@/lib/admin-auth'
 import { prisma } from '@/lib/prisma'
 
@@ -139,25 +140,33 @@ export async function POST(request: Request): Promise<NextResponse> {
       )
     }
 
-    const role = await prisma.role.create({
-      data: {
-        name,
-        description: normalizeDescription(body.description),
-      },
-      include: {
-        _count: {
-          select: {
-            users: true,
-            modules: true,
+    const role = await prisma.$transaction(async (tx) => {
+      const createdRole = await tx.role.create({
+        data: {
+          name,
+          description: normalizeDescription(body.description),
+        },
+        include: {
+          _count: {
+            select: {
+              users: true,
+              modules: true,
+            },
           },
         },
-      },
-    })
+      })
 
-    console.log('Admin role created:', {
-      actorEmail: authorization.customer.email,
-      roleId: role.id,
-      roleName: role.name,
+      await writeAdminAuditLog(tx, {
+        actor: authorization,
+        action: 'ROLE_CREATED',
+        entityType: 'ROLE',
+        entityId: createdRole.id.toString(),
+        entityLabel: createdRole.name,
+        targetRoleId: createdRole.id,
+        metadata: { roleName: createdRole.name },
+      })
+
+      return createdRole
     })
 
     return NextResponse.json<ApiResponse<AdminRoleSummary>>(

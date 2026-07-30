@@ -9,6 +9,7 @@ const {
   transactionMock,
   txRoleModuleCreateManyMock,
   txRoleModuleDeleteManyMock,
+  writeAdminAuditLogMock,
 } = vi.hoisted(() => ({
   getAdminAuthorizationMock: vi.fn(),
   moduleFindManyMock: vi.fn(),
@@ -18,6 +19,11 @@ const {
   transactionMock: vi.fn(),
   txRoleModuleCreateManyMock: vi.fn(),
   txRoleModuleDeleteManyMock: vi.fn(),
+  writeAdminAuditLogMock: vi.fn(),
+}))
+
+vi.mock('@/lib/admin-audit', () => ({
+  writeAdminAuditLog: writeAdminAuditLogMock,
 }))
 
 vi.mock('@/lib/admin-auth', () => ({
@@ -77,6 +83,7 @@ function expectNoMutation() {
   expect(transactionMock).not.toHaveBeenCalled()
   expect(txRoleModuleDeleteManyMock).not.toHaveBeenCalled()
   expect(txRoleModuleCreateManyMock).not.toHaveBeenCalled()
+  expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
 }
 
 describe('admin role module mapping API', () => {
@@ -89,6 +96,7 @@ describe('admin role module mapping API', () => {
     transactionMock.mockReset()
     txRoleModuleCreateManyMock.mockReset()
     txRoleModuleDeleteManyMock.mockReset()
+    writeAdminAuditLogMock.mockReset()
     authorizeAdmin()
     transactionMock.mockImplementation(async (callback) =>
       callback({
@@ -427,7 +435,6 @@ describe('admin role module mapping API', () => {
   })
 
   it('allows empty access for non-Admin roles and deletes existing mappings', async () => {
-    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined)
     roleFindUniqueMock.mockResolvedValue({ id: 2, name: 'Sales' })
 
     const response = await PUT(
@@ -448,18 +455,20 @@ describe('admin role module mapping API', () => {
     expect(transactionMock).toHaveBeenCalledTimes(1)
     expect(txRoleModuleDeleteManyMock).toHaveBeenCalledWith({ where: { roleId: 2 } })
     expect(txRoleModuleCreateManyMock).not.toHaveBeenCalled()
-    expect(consoleLogSpy).toHaveBeenCalledWith('Admin role module access updated:', {
-      actorEmail: 'admin@example.com',
-      roleId: 2,
-      moduleIds: [],
-      subModuleIds: [],
-    })
-
-    consoleLogSpy.mockRestore()
+    expect(writeAdminAuditLogMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        action: 'ROLE_MODULES_UPDATED',
+        entityType: 'ROLE_MODULE',
+        entityId: '2',
+        entityLabel: 'Sales',
+        targetRoleId: 2,
+        metadata: { moduleIds: [], subModuleIds: [] },
+      })
+    )
   })
 
   it('replaces mappings transactionally for top-level module access only', async () => {
-    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined)
     roleFindUniqueMock.mockResolvedValue({ id: 2, name: 'Sales' })
     moduleFindManyMock.mockResolvedValue([{ id: 3 }, { id: 1 }])
 
@@ -487,18 +496,16 @@ describe('admin role module mapping API', () => {
         { roleId: 2, moduleId: 3, subModuleId: null },
       ],
     })
-    expect(consoleLogSpy).toHaveBeenCalledWith('Admin role module access updated:', {
-      actorEmail: 'admin@example.com',
-      roleId: 2,
-      moduleIds: ['1', '3'],
-      subModuleIds: [],
-    })
-
-    consoleLogSpy.mockRestore()
+    expect(writeAdminAuditLogMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        action: 'ROLE_MODULES_UPDATED',
+        metadata: { moduleIds: ['1', '3'], subModuleIds: [] },
+      })
+    )
   })
 
   it('replaces mappings transactionally for mixed module and sub-module access', async () => {
-    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined)
     roleFindUniqueMock.mockResolvedValue({ id: 2, name: 'Sales' })
     moduleFindManyMock.mockResolvedValue([{ id: 3 }, { id: 1 }])
     subModuleFindManyMock.mockResolvedValue([
@@ -531,20 +538,13 @@ describe('admin role module mapping API', () => {
         { roleId: 2, moduleId: 3, subModuleId: 12 },
       ],
     })
-    expect(consoleLogSpy).toHaveBeenCalledWith('Admin role module access updated:', {
-      actorEmail: 'admin@example.com',
-      roleId: 2,
-      moduleIds: ['1', '3'],
-      subModuleIds: ['10', '12'],
-    })
-    expect(Object.keys(consoleLogSpy.mock.calls[0][1])).toEqual([
-      'actorEmail',
-      'roleId',
-      'moduleIds',
-      'subModuleIds',
-    ])
-
-    consoleLogSpy.mockRestore()
+    expect(writeAdminAuditLogMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        action: 'ROLE_MODULES_UPDATED',
+        metadata: { moduleIds: ['1', '3'], subModuleIds: ['10', '12'] },
+      })
+    )
   })
 
   it('returns a safe 500 response when the update fails unexpectedly', async () => {

@@ -149,6 +149,36 @@ export interface AdminUserRoleAssignmentRequest {
   roleIds: string[];
 }
 
+export type AdminAuditAction =
+  | 'ROLE_CREATED'
+  | 'ROLE_UPDATED'
+  | 'ROLE_DELETED'
+  | 'USER_UPDATED'
+  | 'USER_ROLES_UPDATED'
+  | 'ROLE_MODULES_UPDATED';
+
+export type AdminAuditEntityType = 'ROLE' | 'CUSTOMER' | 'USER_ROLE' | 'ROLE_MODULE';
+
+export interface AdminAuditLogSummary {
+  id: string;
+  actorCustomerId?: string | null;
+  actorEmail: string;
+  action: AdminAuditAction;
+  entityType: AdminAuditEntityType;
+  entityId?: string | null;
+  entityLabel?: string | null;
+  targetCustomerId?: string | null;
+  targetRoleId?: string | null;
+  metadata?: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export interface AdminAuditLogsData {
+  logs: AdminAuditLogSummary[];
+  nextCursor?: string | null;
+  totalCount: number;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;

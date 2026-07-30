@@ -6,6 +6,7 @@ import type {
   ApiResponse,
 } from '@saas/shared-types'
 
+import { writeAdminAuditLog } from '@/lib/admin-audit'
 import { getAdminAuthorization } from '@/lib/admin-auth'
 import {
   mapRoleModuleMapping,
@@ -228,17 +229,23 @@ export async function PUT(request: Request, context: RouteContext): Promise<Next
           data: roleModuleRows,
         })
       }
+
+      await writeAdminAuditLog(tx, {
+        actor: authorization,
+        action: 'ROLE_MODULES_UPDATED',
+        entityType: 'ROLE_MODULE',
+        entityId: parsedRoleId.toString(),
+        entityLabel: role.name,
+        targetRoleId: parsedRoleId,
+        metadata: {
+          moduleIds: toStringIds(moduleIds),
+          subModuleIds: toStringIds(subModuleIds),
+        },
+      })
     })
 
     const normalizedModuleIds = toStringIds(moduleIds)
     const normalizedSubModuleIds = toStringIds(subModuleIds)
-
-    console.log('Admin role module access updated:', {
-      actorEmail: authorization.customer.email,
-      roleId: parsedRoleId,
-      moduleIds: normalizedModuleIds,
-      subModuleIds: normalizedSubModuleIds,
-    })
 
     return NextResponse.json<ApiResponse<AdminRoleModuleMappingData>>({
       success: true,

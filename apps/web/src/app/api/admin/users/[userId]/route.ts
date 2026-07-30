@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { ApiResponse, AdminUserMutationRequest, AdminUserSummary } from '@saas/shared-types'
+import { writeAdminAuditLog } from '@/lib/admin-audit'
 import { getAdminAuthorization } from '@/lib/admin-auth'
 import { adminUserSelect, mapAdminUser } from '@/lib/admin-users'
 import { prisma } from '@/lib/prisma'
@@ -116,7 +117,7 @@ export async function PUT(request: Request, context: RouteContext): Promise<Next
 
     const currentUser = await prisma.customer.findUnique({
       where: { id: parsedUserId },
-      select: { id: true },
+      select: { id: true, email: true, name: true, company: true },
     })
 
     if (!currentUser) {
@@ -145,15 +146,30 @@ export async function PUT(request: Request, context: RouteContext): Promise<Next
       )
     }
 
-    const user = await prisma.customer.update({
-      where: { id: parsedUserId },
-      data: normalizedUser,
-      select: adminUserSelect,
-    })
+    const changedFields = [
+      ...(currentUser.email.toLowerCase() !== normalizedUser.email ? ['email'] : []),
+      ...(currentUser.name !== normalizedUser.name ? ['name'] : []),
+      ...(currentUser.company !== normalizedUser.company ? ['company'] : []),
+    ]
 
-    console.log('Admin user updated:', {
-      actorEmail: authorization.customer.email,
-      userId: user.id,
+    const user = await prisma.$transaction(async (tx) => {
+      const updatedUser = await tx.customer.update({
+        where: { id: parsedUserId },
+        data: normalizedUser,
+        select: adminUserSelect,
+      })
+
+      await writeAdminAuditLog(tx, {
+        actor: authorization,
+        action: 'USER_UPDATED',
+        entityType: 'CUSTOMER',
+        entityId: parsedUserId.toString(),
+        entityLabel: updatedUser.name,
+        targetCustomerId: parsedUserId,
+        metadata: { changedFields },
+      })
+
+      return updatedUser
     })
 
     return NextResponse.json<ApiResponse<AdminUserSummary>>({

@@ -9,6 +9,7 @@ const {
   userRoleCountMock,
   userRoleCreateManyMock,
   userRoleDeleteManyMock,
+  writeAdminAuditLogMock,
 } = vi.hoisted(() => ({
   customerFindUniqueMock: vi.fn(),
   getAdminAuthorizationMock: vi.fn(),
@@ -18,6 +19,11 @@ const {
   userRoleCountMock: vi.fn(),
   userRoleCreateManyMock: vi.fn(),
   userRoleDeleteManyMock: vi.fn(),
+  writeAdminAuditLogMock: vi.fn(),
+}))
+
+vi.mock('@/lib/admin-audit', () => ({
+  writeAdminAuditLog: writeAdminAuditLogMock,
 }))
 
 vi.mock('@/lib/admin-auth', () => ({
@@ -123,6 +129,7 @@ describe('admin user role assignment API', () => {
     userRoleCountMock.mockReset()
     userRoleCreateManyMock.mockReset()
     userRoleDeleteManyMock.mockReset()
+    writeAdminAuditLogMock.mockReset()
     authorizeAdmin()
   })
 
@@ -143,6 +150,7 @@ describe('admin user role assignment API', () => {
     expect(customerFindUniqueMock).not.toHaveBeenCalled()
     expect(roleFindManyMock).not.toHaveBeenCalled()
     expect(transactionMock).not.toHaveBeenCalled()
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
   })
 
   it('rejects invalid user ids before reading role data', async () => {
@@ -157,6 +165,7 @@ describe('admin user role assignment API', () => {
     expect(response.status).toBe(400)
     expect(customerFindUniqueMock).not.toHaveBeenCalled()
     expect(roleFindManyMock).not.toHaveBeenCalled()
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
   })
 
   it('rejects malformed JSON and missing or non-array roleIds', async () => {
@@ -187,6 +196,7 @@ describe('admin user role assignment API', () => {
     })
     expect(nonArrayResponse.status).toBe(400)
     expect(transactionMock).not.toHaveBeenCalled()
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
   })
 
   it('rejects non-positive, non-string, or duplicate role ids', async () => {
@@ -211,6 +221,7 @@ describe('admin user role assignment API', () => {
     })
     expect(duplicateResponse.status).toBe(400)
     expect(transactionMock).not.toHaveBeenCalled()
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
   })
 
   it('rejects missing users and unknown roles without mutation', async () => {
@@ -235,6 +246,7 @@ describe('admin user role assignment API', () => {
     })
     expect(unknownRoleResponse.status).toBe(400)
     expect(transactionMock).not.toHaveBeenCalled()
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
   })
 
   it('prevents removing Admin from the only remaining admin user', async () => {
@@ -251,6 +263,7 @@ describe('admin user role assignment API', () => {
     })
     expect(response.status).toBe(409)
     expect(transactionMock).not.toHaveBeenCalled()
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
   })
 
   it('allows empty role assignments when another admin remains', async () => {
@@ -262,6 +275,16 @@ describe('admin user role assignment API', () => {
     expect(transactionMock).toHaveBeenCalledTimes(1)
     expect(userRoleDeleteManyMock).toHaveBeenCalledWith({ where: { customerId: 2 } })
     expect(userRoleCreateManyMock).not.toHaveBeenCalled()
+    expect(writeAdminAuditLogMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        action: 'USER_ROLES_UPDATED',
+        entityType: 'USER_ROLE',
+        entityId: '2',
+        targetCustomerId: 2,
+        metadata: { roleIds: [] },
+      })
+    )
   })
 
   it('replaces assignments in a transaction and returns the mapped user summary', async () => {
@@ -303,6 +326,16 @@ describe('admin user role assignment API', () => {
     expect(customerFindUniqueMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
         where: { id: 2 },
+      })
+    )
+    expect(writeAdminAuditLogMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        action: 'USER_ROLES_UPDATED',
+        entityType: 'USER_ROLE',
+        entityId: '2',
+        targetCustomerId: 2,
+        metadata: { roleIds: ['2', '3'] },
       })
     )
   })

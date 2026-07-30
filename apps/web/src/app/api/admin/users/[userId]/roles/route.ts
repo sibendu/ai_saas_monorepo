@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { Prisma } from '@prisma/client'
 import { AdminUserRoleAssignmentRequest, AdminUserSummary, ApiResponse } from '@saas/shared-types'
+import { writeAdminAuditLog } from '@/lib/admin-audit'
 import { getAdminAuthorization } from '@/lib/admin-auth'
 import { adminUserSelect, mapAdminUser } from '@/lib/admin-users'
 import { prisma } from '@/lib/prisma'
@@ -195,6 +196,15 @@ export async function PUT(request: Request, context: RouteContext): Promise<Next
           })),
         })
       }
+
+      await writeAdminAuditLog(tx, {
+        actor: authorization,
+        action: 'USER_ROLES_UPDATED',
+        entityType: 'USER_ROLE',
+        entityId: parsedUserId.toString(),
+        targetCustomerId: parsedUserId,
+        metadata: { roleIds: roleIds.map((roleId) => roleId.toString()) },
+      })
     })
 
     const updatedUser = await prisma.customer.findUnique({
@@ -208,12 +218,6 @@ export async function PUT(request: Request, context: RouteContext): Promise<Next
         { status: 404 }
       )
     }
-
-    console.log('Admin user roles updated:', {
-      actorEmail: authorization.customer.email,
-      targetUserId: parsedUserId,
-      roleIds,
-    })
 
     return NextResponse.json<ApiResponse<AdminUserSummary>>({
       success: true,

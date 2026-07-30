@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { ApiResponse, AdminRoleMutationRequest, AdminRoleSummary } from '@saas/shared-types'
+import { writeAdminAuditLog } from '@/lib/admin-audit'
 import { getAdminAuthorization } from '@/lib/admin-auth'
 import { prisma } from '@/lib/prisma'
 
@@ -116,6 +117,7 @@ export async function PUT(request: Request, context: RouteContext): Promise<Next
       select: {
         id: true,
         name: true,
+        description: true,
       },
     })
 
@@ -152,26 +154,40 @@ export async function PUT(request: Request, context: RouteContext): Promise<Next
       )
     }
 
-    const role = await prisma.role.update({
-      where: { id: parsedRoleId },
-      data: {
-        name,
-        description: normalizeDescription(body.description),
-      },
-      include: {
-        _count: {
-          select: {
-            users: true,
-            modules: true,
+    const description = normalizeDescription(body.description)
+    const role = await prisma.$transaction(async (tx) => {
+      const updatedRole = await tx.role.update({
+        where: { id: parsedRoleId },
+        data: {
+          name,
+          description,
+        },
+        include: {
+          _count: {
+            select: {
+              users: true,
+              modules: true,
+            },
           },
         },
-      },
-    })
+      })
 
-    console.log('Admin role updated:', {
-      actorEmail: authorization.customer.email,
-      roleId: role.id,
-      roleName: role.name,
+      const changedFields = [
+        ...(currentRole.name !== updatedRole.name ? ['name'] : []),
+        ...(currentRole.description !== updatedRole.description ? ['description'] : []),
+      ]
+
+      await writeAdminAuditLog(tx, {
+        actor: authorization,
+        action: 'ROLE_UPDATED',
+        entityType: 'ROLE',
+        entityId: updatedRole.id.toString(),
+        entityLabel: updatedRole.name,
+        targetRoleId: updatedRole.id,
+        metadata: { roleName: updatedRole.name, changedFields },
+      })
+
+      return updatedRole
     })
 
     return NextResponse.json<ApiResponse<AdminRoleSummary>>({
@@ -261,12 +277,28 @@ export async function DELETE(_request: Request, context: RouteContext): Promise<
       )
     }
 
-    const deleteResult = await prisma.role.deleteMany({
-      where: {
-        id: parsedRoleId,
-        users: { none: {} },
-        modules: { none: {} },
-      },
+    const deleteResult = await prisma.$transaction(async (tx) => {
+      const deleted = await tx.role.deleteMany({
+        where: {
+          id: parsedRoleId,
+          users: { none: {} },
+          modules: { none: {} },
+        },
+      })
+
+      if (deleted.count > 0) {
+        await writeAdminAuditLog(tx, {
+          actor: authorization,
+          action: 'ROLE_DELETED',
+          entityType: 'ROLE',
+          entityId: role.id.toString(),
+          entityLabel: role.name,
+          targetRoleId: role.id,
+          metadata: { roleName: role.name },
+        })
+      }
+
+      return deleted
     })
 
     if (deleteResult.count === 0) {
@@ -278,12 +310,6 @@ export async function DELETE(_request: Request, context: RouteContext): Promise<
         { status: 409 }
       )
     }
-
-    console.log('Admin role deleted:', {
-      actorEmail: authorization.customer.email,
-      roleId: role.id,
-      roleName: role.name,
-    })
 
     return NextResponse.json<ApiResponse<{ id: string }>>({
       success: true,

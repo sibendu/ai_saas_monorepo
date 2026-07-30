@@ -58,6 +58,30 @@ describe('AdminManagementTabs', () => {
             subModuleIds: ['4'],
           },
         })
+      ),
+      http.get('*/api/admin/audit-logs', async () =>
+        HttpResponse.json({
+          success: true,
+          data: {
+            logs: [
+              {
+                id: '1',
+                actorCustomerId: '1',
+                actorEmail: 'admin@example.com',
+                action: 'ROLE_UPDATED',
+                entityType: 'ROLE',
+                entityId: '1',
+                entityLabel: 'Manager',
+                targetCustomerId: null,
+                targetRoleId: '1',
+                metadata: { changedFields: ['description'] },
+                createdAt: '2026-01-01T00:00:00.000Z',
+              },
+            ],
+            nextCursor: null,
+            totalCount: 1,
+          },
+        })
       )
     )
 
@@ -73,11 +97,13 @@ describe('AdminManagementTabs', () => {
     const rolesTab = screen.getByRole('button', { name: 'Roles' })
     const usersTab = screen.getByRole('button', { name: 'Users' })
     const modulesTab = screen.getByRole('button', { name: 'Modules' })
+    const logsTab = screen.getByRole('button', { name: 'Logs' })
 
     expect(rolesTab).toHaveClass('bg-indigo-600', 'text-white')
     expect(usersTab).toHaveClass('text-gray-700', 'hover:bg-gray-100')
     expect(modulesTab).toBeEnabled()
     expect(modulesTab).toHaveClass('text-gray-700', 'hover:bg-gray-100')
+    expect(logsTab).toBeEnabled()
 
     await user.click(usersTab)
 
@@ -98,5 +124,11 @@ describe('AdminManagementTabs', () => {
     await user.click(rolesTab)
 
     expect(screen.getByText('Manager access')).toBeInTheDocument()
+
+    await user.click(logsTab)
+
+    expect(await screen.findByRole('heading', { name: 'Audit logs' })).toBeInTheDocument()
+    expect(screen.getByText('admin@example.com')).toBeInTheDocument()
+    expect(screen.getAllByText('Role updated').length).toBeGreaterThan(0)
   })
 })

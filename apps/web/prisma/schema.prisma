@@ -23,6 +23,22 @@ enum TaskPriority {
   Critical
 }
 
+enum AdminAuditAction {
+  ROLE_CREATED
+  ROLE_UPDATED
+  ROLE_DELETED
+  USER_UPDATED
+  USER_ROLES_UPDATED
+  ROLE_MODULES_UPDATED
+}
+
+enum AdminAuditEntityType {
+  ROLE
+  CUSTOMER
+  USER_ROLE
+  ROLE_MODULE
+}
+
 model Customer {
   id                     Int              @id @default(autoincrement())
   email                  String           @map("username")
@@ -114,4 +130,26 @@ model UserRole {
 
   @@id([customerId, roleId])
   @@map("user_role")
+}
+
+model AuditLog {
+  id               Int                  @id @default(autoincrement())
+  actorCustomerId  Int?                 @map("actor_customer_id")
+  actorEmail       String               @map("actor_email")
+  action           AdminAuditAction
+  entityType       AdminAuditEntityType @map("entity_type")
+  entityId         String?              @map("entity_id")
+  entityLabel      String?              @map("entity_label")
+  targetCustomerId Int?                 @map("target_customer_id")
+  targetRoleId     Int?                 @map("target_role_id")
+  metadata         Json?
+  createdAt        DateTime             @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([action])
+  @@index([entityType])
+  @@index([actorEmail])
+  @@index([targetCustomerId])
+  @@index([targetRoleId])
+  @@map("audit_log")
 }

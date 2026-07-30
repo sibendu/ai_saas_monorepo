@@ -5,11 +5,19 @@ const {
   customerFindUniqueMock,
   customerUpdateMock,
   getAdminAuthorizationMock,
+  transactionMock,
+  writeAdminAuditLogMock,
 } = vi.hoisted(() => ({
   customerFindFirstMock: vi.fn(),
   customerFindUniqueMock: vi.fn(),
   customerUpdateMock: vi.fn(),
   getAdminAuthorizationMock: vi.fn(),
+  transactionMock: vi.fn(),
+  writeAdminAuditLogMock: vi.fn(),
+}))
+
+vi.mock('@/lib/admin-audit', () => ({
+  writeAdminAuditLog: writeAdminAuditLogMock,
 }))
 
 vi.mock('@/lib/admin-auth', () => ({
@@ -18,10 +26,10 @@ vi.mock('@/lib/admin-auth', () => ({
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    $transaction: transactionMock,
     customer: {
       findFirst: customerFindFirstMock,
       findUnique: customerFindUniqueMock,
-      update: customerUpdateMock,
     },
   },
 }))
@@ -73,6 +81,15 @@ describe('admin user detail API', () => {
     customerFindUniqueMock.mockReset()
     customerUpdateMock.mockReset()
     getAdminAuthorizationMock.mockReset()
+    transactionMock.mockReset()
+    writeAdminAuditLogMock.mockReset()
+    transactionMock.mockImplementation((callback) =>
+      callback({
+        customer: {
+          update: customerUpdateMock,
+        },
+      })
+    )
     authorizeAdmin()
   })
 
@@ -91,6 +108,7 @@ describe('admin user detail API', () => {
     })
     expect(response.status).toBe(403)
     expect(customerUpdateMock).not.toHaveBeenCalled()
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
   })
 
   it('rejects invalid user ids before reading the body', async () => {
@@ -105,6 +123,7 @@ describe('admin user detail API', () => {
     expect(response.status).toBe(400)
     expect(customerFindUniqueMock).not.toHaveBeenCalled()
     expect(customerUpdateMock).not.toHaveBeenCalled()
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
   })
 
   it('rejects malformed JSON with a client error', async () => {
@@ -122,6 +141,7 @@ describe('admin user detail API', () => {
     })
     expect(response.status).toBe(400)
     expect(customerFindUniqueMock).not.toHaveBeenCalled()
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
   })
 
   it('rejects blank required fields and invalid emails', async () => {
@@ -146,6 +166,7 @@ describe('admin user detail API', () => {
     })
     expect(invalidEmailResponse.status).toBe(400)
     expect(customerUpdateMock).not.toHaveBeenCalled()
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
   })
 
   it('returns a conflict when the email belongs to another user', async () => {
@@ -160,6 +181,7 @@ describe('admin user detail API', () => {
     })
     expect(response.status).toBe(409)
     expect(customerUpdateMock).not.toHaveBeenCalled()
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
   })
 
   it('returns not found when the target user is missing', async () => {
@@ -173,10 +195,16 @@ describe('admin user detail API', () => {
     })
     expect(response.status).toBe(404)
     expect(customerUpdateMock).not.toHaveBeenCalled()
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
   })
 
   it('updates editable fields only and returns the updated user with roles', async () => {
-    customerFindUniqueMock.mockResolvedValue({ id: 2 })
+    customerFindUniqueMock.mockResolvedValue({
+      id: 2,
+      email: 'old@example.com',
+      name: 'Old Name',
+      company: 'Old Co',
+    })
     customerFindFirstMock.mockResolvedValue(null)
     customerUpdateMock.mockResolvedValue(updatedUser)
 
@@ -215,6 +243,16 @@ describe('admin user detail API', () => {
           name: 'Jane User',
           company: null,
         },
+      })
+    )
+    expect(writeAdminAuditLogMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        action: 'USER_UPDATED',
+        entityType: 'CUSTOMER',
+        entityId: '2',
+        targetCustomerId: 2,
+        metadata: { changedFields: ['email', 'name', 'company'] },
       })
     )
   })

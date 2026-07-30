@@ -1,12 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { getAdminAuthorizationMock, roleCreateMock, roleFindFirstMock, roleFindManyMock } =
+const { getAdminAuthorizationMock, roleCreateMock, roleFindFirstMock, roleFindManyMock, transactionMock, writeAdminAuditLogMock } =
   vi.hoisted(() => ({
     getAdminAuthorizationMock: vi.fn(),
     roleCreateMock: vi.fn(),
     roleFindFirstMock: vi.fn(),
     roleFindManyMock: vi.fn(),
+    transactionMock: vi.fn(),
+    writeAdminAuditLogMock: vi.fn(),
   }))
+
+vi.mock('@/lib/admin-audit', () => ({
+  writeAdminAuditLog: writeAdminAuditLogMock,
+}))
 
 vi.mock('@/lib/admin-auth', () => ({
   getAdminAuthorization: getAdminAuthorizationMock,
@@ -14,8 +20,8 @@ vi.mock('@/lib/admin-auth', () => ({
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    $transaction: transactionMock,
     role: {
-      create: roleCreateMock,
       findFirst: roleFindFirstMock,
       findMany: roleFindManyMock,
     },
@@ -42,6 +48,15 @@ describe('admin roles API', () => {
     roleCreateMock.mockReset()
     roleFindFirstMock.mockReset()
     roleFindManyMock.mockReset()
+    transactionMock.mockReset()
+    writeAdminAuditLogMock.mockReset()
+    transactionMock.mockImplementation((callback) =>
+      callback({
+        role: {
+          create: roleCreateMock,
+        },
+      })
+    )
   })
 
   it('rejects non-admin callers before listing roles', async () => {
@@ -111,6 +126,7 @@ describe('admin roles API', () => {
     })
     expect(response.status).toBe(400)
     expect(roleCreateMock).not.toHaveBeenCalled()
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
   })
 
   it('rejects duplicate role names on create', async () => {
@@ -130,6 +146,7 @@ describe('admin roles API', () => {
     })
     expect(response.status).toBe(409)
     expect(roleCreateMock).not.toHaveBeenCalled()
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
   })
 
   it('maps database unique conflicts on create to duplicate role errors', async () => {
@@ -168,5 +185,40 @@ describe('admin roles API', () => {
     expect(response.status).toBe(400)
     expect(roleFindFirstMock).not.toHaveBeenCalled()
     expect(roleCreateMock).not.toHaveBeenCalled()
+  })
+
+  it('writes an audit row when a role is created successfully', async () => {
+    authorizeAdmin()
+    roleFindFirstMock.mockResolvedValue(null)
+    roleCreateMock.mockResolvedValue({
+      id: 7,
+      name: 'Support',
+      description: null,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+      _count: {
+        users: 0,
+        modules: 0,
+      },
+    })
+
+    const response = await POST(
+      new Request('http://localhost/api/admin/roles', {
+        method: 'POST',
+        body: JSON.stringify({ name: 'Support' }),
+      })
+    )
+
+    expect(response.status).toBe(201)
+    expect(writeAdminAuditLogMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        action: 'ROLE_CREATED',
+        entityType: 'ROLE',
+        entityId: '7',
+        targetRoleId: 7,
+        metadata: { roleName: 'Support' },
+      })
+    )
   })
 })

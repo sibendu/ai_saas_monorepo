@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { AdminModuleSummary, AdminRoleSummary, AdminUserSummary } from '@saas/shared-types'
+import AuditLogViewer from '@/components/admin/AuditLogViewer'
 import RoleManagement from '@/components/admin/RoleManagement'
 import RoleModuleManagement from '@/components/admin/RoleModuleManagement'
 import UserManagement from '@/components/admin/UserManagement'
@@ -12,7 +13,7 @@ interface AdminManagementTabsProps {
   initialModules: AdminModuleSummary[]
 }
 
-type AdminTab = 'roles' | 'users' | 'modules'
+type AdminTab = 'roles' | 'users' | 'modules' | 'logs'
 
 export default function AdminManagementTabs({
   initialRoles,
@@ -58,6 +59,17 @@ export default function AdminManagementTabs({
           >
             Modules
           </button>
+          <button
+            type="button"
+            className={`rounded-md px-4 py-2 text-sm font-semibold ${
+              activeTab === 'logs'
+                ? 'bg-indigo-600 text-white'
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+            onClick={() => setActiveTab('logs')}
+          >
+            Logs
+          </button>
         </div>
       </div>
 
@@ -68,6 +80,7 @@ export default function AdminManagementTabs({
       {activeTab === 'modules' && (
         <RoleModuleManagement initialRoles={initialRoles} initialModules={initialModules} />
       )}
+      {activeTab === 'logs' && <AuditLogViewer />}
     </div>
   )
 }
