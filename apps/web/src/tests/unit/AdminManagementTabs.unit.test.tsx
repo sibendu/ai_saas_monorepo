@@ -25,20 +25,64 @@ const initialUsers = [
   },
 ]
 
+const initialModules = [
+  {
+    id: '3',
+    label: 'Analytics',
+    icon: null,
+    href: '/analytics',
+    subModules: [
+      {
+        id: '4',
+        moduleId: '3',
+        label: 'Campaigns',
+        icon: null,
+        href: '/analytics/campaigns',
+      },
+    ],
+  },
+]
+
 describe('AdminManagementTabs', () => {
-  it('switches from roles to users and leaves modules disabled', async () => {
+  it('switches between roles, users, and enabled modules tabs', async () => {
     const user = userEvent.setup()
 
-    render(<AdminManagementTabs initialRoles={initialRoles} initialUsers={initialUsers} />)
+    render(
+      <AdminManagementTabs
+        initialRoles={initialRoles}
+        initialUsers={initialUsers}
+        initialModules={initialModules}
+      />
+    )
 
     expect(screen.getByText('Manager')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Modules' })).toBeDisabled()
+    const rolesTab = screen.getByRole('button', { name: 'Roles' })
+    const usersTab = screen.getByRole('button', { name: 'Users' })
+    const modulesTab = screen.getByRole('button', { name: 'Modules' })
 
-    await user.click(screen.getByRole('button', { name: 'Users' }))
+    expect(rolesTab).toHaveClass('bg-indigo-600', 'text-white')
+    expect(usersTab).toHaveClass('text-gray-700', 'hover:bg-gray-100')
+    expect(modulesTab).toBeEnabled()
+    expect(modulesTab).toHaveClass('text-gray-700', 'hover:bg-gray-100')
+
+    await user.click(usersTab)
 
     expect(screen.getByText('jane@example.com')).toBeInTheDocument()
     expect(screen.getByText('No roles assigned')).toBeInTheDocument()
     expect(screen.getByRole('checkbox', { name: 'Manager for Jane User' })).not.toBeChecked()
-    expect(screen.getByRole('button', { name: 'Modules' })).toBeDisabled()
+    expect(usersTab).toHaveClass('bg-indigo-600', 'text-white')
+    expect(modulesTab).toHaveClass('text-gray-700', 'hover:bg-gray-100')
+
+    await user.click(modulesTab)
+
+    expect(screen.getByRole('heading', { name: 'Role module access' })).toBeInTheDocument()
+    expect(screen.getByText('Analytics')).toBeInTheDocument()
+    expect(screen.getByText('Campaigns')).toBeInTheDocument()
+    expect(modulesTab).toHaveClass('bg-indigo-600', 'text-white')
+    expect(rolesTab).toHaveClass('text-gray-700', 'hover:bg-gray-100')
+
+    await user.click(rolesTab)
+
+    expect(screen.getByText('Manager access')).toBeInTheDocument()
   })
 })
