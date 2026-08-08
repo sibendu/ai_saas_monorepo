@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: saas-postgres-data
+  namespace: saas-foundation
+  labels:
+    app.kubernetes.io/name: saas-postgres
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: saas-foundation
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi

@@ -4,7 +4,7 @@ baseline_commit: 6c78e9892880416dbe22b3b518d623db9c4ca4af
 
 # Story 4.5: Admin Panel - Role-Module Mapping CRUD
 
-Status: ready-for-dev
+Status: review
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created. -->
 
@@ -31,74 +31,74 @@ so that menu permissions can be changed without editing seed data or the databas
 
 ## Tasks / Subtasks
 
-- [ ] Add shared admin module/mapping DTOs in `packages/shared-types/src/index.ts` (AC: 1, 3-6, 10)
-  - [ ] Add `AdminSubModuleSummary` with `id`, `moduleId`, `label`, `icon`, and `href`.
-  - [ ] Add `AdminModuleSummary` with `id`, `label`, `icon`, `href`, and `subModules`.
-  - [ ] Add `AdminModulesData` with `modules: AdminModuleSummary[]`.
-  - [ ] Add `AdminRoleModuleMappingData` with `roleId`, `moduleIds`, and `subModuleIds`.
-  - [ ] Add `AdminRoleModuleMappingRequest` with `moduleIds: string[]` and `subModuleIds: string[]`.
-  - [ ] Keep existing public `AllowedModule`, `RoleModule`, user-role DTOs, and `ApiResponse<T>` contracts compatible.
+- [x] Add shared admin module/mapping DTOs in `packages/shared-types/src/index.ts` (AC: 1, 3-6, 10)
+  - [x] Add `AdminSubModuleSummary` with `id`, `moduleId`, `label`, `icon`, and `href`.
+  - [x] Add `AdminModuleSummary` with `id`, `label`, `icon`, `href`, and `subModules`.
+  - [x] Add `AdminModulesData` with `modules: AdminModuleSummary[]`.
+  - [x] Add `AdminRoleModuleMappingData` with `roleId`, `moduleIds`, and `subModuleIds`.
+  - [x] Add `AdminRoleModuleMappingRequest` with `moduleIds: string[]` and `subModuleIds: string[]`.
+  - [x] Keep existing public `AllowedModule`, `RoleModule`, user-role DTOs, and `ApiResponse<T>` contracts compatible.
 
-- [ ] Add reusable admin module mapping helpers under `apps/web/src/lib/admin-modules.ts` (AC: 1, 3-6, 10, 11)
-  - [ ] Define a `moduleWithSubModulesSelect`/mapper that returns sorted module summaries without leaking unrelated database fields.
-  - [ ] Define a role mapping mapper that returns selected top-level module ids and selected sub-module ids as strings.
-  - [ ] Reuse these helpers from page data loading, API routes, and tests instead of duplicating shape conversion.
-  - [ ] Preserve the existing two-level model; do not introduce recursive tree logic.
+- [x] Add reusable admin module mapping helpers under `apps/web/src/lib/admin-modules.ts` (AC: 1, 3-6, 10, 11)
+  - [x] Define a `moduleWithSubModulesSelect`/mapper that returns sorted module summaries without leaking unrelated database fields.
+  - [x] Define a role mapping mapper that returns selected top-level module ids and selected sub-module ids as strings.
+  - [x] Reuse these helpers from page data loading, API routes, and tests instead of duplicating shape conversion.
+  - [x] Preserve the existing two-level model; do not introduce recursive tree logic.
 
-- [ ] Add admin-only module list API at `apps/web/src/app/api/admin/modules/route.ts` (AC: 1, 2)
-  - [ ] Reuse `getAdminAuthorization()` before querying module data.
-  - [ ] Query `prisma.module.findMany` ordered by label and include `subModules` ordered by label.
-  - [ ] Return `ApiResponse<AdminModulesData>` with module and sub-module ids converted to strings.
-  - [ ] Do not create, edit, or delete modules in this story; seed data remains the module source.
+- [x] Add admin-only module list API at `apps/web/src/app/api/admin/modules/route.ts` (AC: 1, 2)
+  - [x] Reuse `getAdminAuthorization()` before querying module data.
+  - [x] Query `prisma.module.findMany` ordered by label and include `subModules` ordered by label.
+  - [x] Return `ApiResponse<AdminModulesData>` with module and sub-module ids converted to strings.
+  - [x] Do not create, edit, or delete modules in this story; seed data remains the module source.
 
-- [ ] Add role mapping read/update API at `apps/web/src/app/api/admin/roles/[roleId]/modules/route.ts` (AC: 2-12)
-  - [ ] Type route context as `params: Promise<{ roleId: string }>` and `await context.params`, matching existing dynamic admin routes.
-  - [ ] Implement `GET` for one role's current mapping so the UI can refresh stale selections.
-  - [ ] Implement `PUT` to replace mappings for one role.
-  - [ ] Parse `roleId` as a positive safe integer and return `400 Invalid role id` for bad values.
-  - [ ] Read JSON defensively and return `400 Invalid JSON request body` for malformed bodies.
-  - [ ] Validate `moduleIds` and `subModuleIds` are arrays of unique positive integer strings; return `400` before DB mutation for invalid or duplicate ids.
-  - [ ] Verify the role exists; return `404 Role not found` when stale.
-  - [ ] Verify all submitted modules exist; return `400 One or more modules were not found` for unknown modules.
-  - [ ] Verify all submitted sub-modules exist and belong to modules in the submitted module set; return `400 One or more sub-modules were not found` or `400 Sub-module does not belong to a selected module`.
-  - [ ] Guard the canonical `Admin` role: reject an empty final mapping with `409 Admin role must retain module access`.
-  - [ ] Replace rows in a single Prisma transaction: delete existing `roleModule` rows for `roleId`, create one top-level row for each selected module, then create one row for each selected sub-module using its real `moduleId`.
-  - [ ] Return `200` with `ApiResponse<AdminRoleModuleMappingData>` and message `Role module access updated successfully`.
-  - [ ] Log a minimal event with `actorEmail`, `roleId`, normalized `moduleIds`, and normalized `subModuleIds`.
+- [x] Add role mapping read/update API at `apps/web/src/app/api/admin/roles/[roleId]/modules/route.ts` (AC: 2-12)
+  - [x] Type route context as `params: Promise<{ roleId: string }>` and `await context.params`, matching existing dynamic admin routes.
+  - [x] Implement `GET` for one role's current mapping so the UI can refresh stale selections.
+  - [x] Implement `PUT` to replace mappings for one role.
+  - [x] Parse `roleId` as a positive safe integer and return `400 Invalid role id` for bad values.
+  - [x] Read JSON defensively and return `400 Invalid JSON request body` for malformed bodies.
+  - [x] Validate `moduleIds` and `subModuleIds` are arrays of unique positive integer strings; return `400` before DB mutation for invalid or duplicate ids.
+  - [x] Verify the role exists; return `404 Role not found` when stale.
+  - [x] Verify all submitted modules exist; return `400 One or more modules were not found` for unknown modules.
+  - [x] Verify all submitted sub-modules exist and belong to modules in the submitted module set; return `400 One or more sub-modules were not found` or `400 Sub-module does not belong to a selected module`.
+  - [x] Guard the canonical `Admin` role: reject an empty final mapping with `409 Admin role must retain module access`.
+  - [x] Replace rows in a single Prisma transaction: delete existing `roleModule` rows for `roleId`, create one top-level row for each selected module, then create one row for each selected sub-module using its real `moduleId`.
+  - [x] Return `200` with `ApiResponse<AdminRoleModuleMappingData>` and message `Role module access updated successfully`.
+  - [x] Log a minimal event with `actorEmail`, `roleId`, normalized `moduleIds`, and normalized `subModuleIds`.
 
-- [ ] Enable and implement the Modules tab in `apps/web/src/components/admin/AdminManagementTabs.tsx` (AC: 1, 3-7)
-  - [ ] Extend tab state to include `modules`.
-  - [ ] Replace the disabled Modules button with an enabled tab button.
-  - [ ] Pass `initialRoles` and module data into a new `RoleModuleManagement` component.
-  - [ ] Preserve existing Roles and Users tab behavior, including Story 4.4 role assignment props.
+- [x] Enable and implement the Modules tab in `apps/web/src/components/admin/AdminManagementTabs.tsx` (AC: 1, 3-7)
+  - [x] Extend tab state to include `modules`.
+  - [x] Replace the disabled Modules button with an enabled tab button.
+  - [x] Pass `initialRoles` and module data into a new `RoleModuleManagement` component.
+  - [x] Preserve existing Roles and Users tab behavior, including Story 4.4 role assignment props.
 
-- [ ] Load initial module data in `apps/web/src/app/admin/page.tsx` (AC: 1, 3)
-  - [ ] Keep `requireAdminSession()` before all role/user/module queries.
-  - [ ] Load roles, users, and modules with `Promise.all` after authorization.
-  - [ ] Preserve `AppShell`, `getAuthenticatedShellData()`, page title/subtitle, and existing role/user data loading.
-  - [ ] Do not call the BFF from the admin page for module CRUD; existing admin APIs use Prisma in the web app.
+- [x] Load initial module data in `apps/web/src/app/admin/page.tsx` (AC: 1, 3)
+  - [x] Keep `requireAdminSession()` before all role/user/module queries.
+  - [x] Load roles, users, and modules with `Promise.all` after authorization.
+  - [x] Preserve `AppShell`, `getAuthenticatedShellData()`, page title/subtitle, and existing role/user data loading.
+  - [x] Do not call the BFF from the admin page for module CRUD; existing admin APIs use Prisma in the web app.
 
-- [ ] Add `apps/web/src/components/admin/RoleModuleManagement.tsx` (AC: 1, 3-8, 10, 11)
-  - [ ] Use a compact admin panel style consistent with `RoleManagement` and `UserManagement`.
-  - [ ] Provide a role selector or role rows so admins can choose the role being mapped.
-  - [ ] Render module checkboxes with nested sub-module checkboxes. Checkboxes are the expected control because access is binary and visible.
-  - [ ] Initialize selection from the selected role's existing mappings by calling `GET /api/admin/roles/${roleId}/modules` or by accepting preloaded mapping data if the implementation adds it server-side.
-  - [ ] When a sub-module is checked, ensure its parent module is included in the saved `moduleIds`.
-  - [ ] When a module is unchecked, clear its sub-module selections in UI state before save.
-  - [ ] Save with `PUT /api/admin/roles/${roleId}/modules` and `{ moduleIds, subModuleIds }`.
-  - [ ] On success, update local selected mapping state and refresh or update role `moduleCount` so the Roles tab stays truthful.
-  - [ ] On failure, keep the edited selection visible and show the API error without claiming persistence.
-  - [ ] Show clear empty states for no roles and no modules; do not invent modules client-side.
+- [x] Add `apps/web/src/components/admin/RoleModuleManagement.tsx` (AC: 1, 3-8, 10, 11)
+  - [x] Use a compact admin panel style consistent with `RoleManagement` and `UserManagement`.
+  - [x] Provide a role selector or role rows so admins can choose the role being mapped.
+  - [x] Render module checkboxes with nested sub-module checkboxes. Checkboxes are the expected control because access is binary and visible.
+  - [x] Initialize selection from the selected role's existing mappings by calling `GET /api/admin/roles/${roleId}/modules` or by accepting preloaded mapping data if the implementation adds it server-side.
+  - [x] When a sub-module is checked, ensure its parent module is included in the saved `moduleIds`.
+  - [x] When a module is unchecked, clear its sub-module selections in UI state before save.
+  - [x] Save with `PUT /api/admin/roles/${roleId}/modules` and `{ moduleIds, subModuleIds }`.
+  - [x] On success, update local selected mapping state and refresh or update role `moduleCount` so the Roles tab stays truthful.
+  - [x] On failure, keep the edited selection visible and show the API error without claiming persistence.
+  - [x] Show clear empty states for no roles and no modules; do not invent modules client-side.
 
-- [ ] Add focused tests (AC: 1-12)
-  - [ ] Unit-test `GET /api/admin/modules`: denies non-admin, returns sorted modules with nested sub-modules, and omits unrelated fields.
-  - [ ] Unit-test `GET /api/admin/roles/[roleId]/modules`: denies non-admin, invalid role id, missing role, empty mappings, and populated mappings.
-  - [ ] Unit-test `PUT /api/admin/roles/[roleId]/modules`: malformed JSON, missing/non-array fields, invalid ids, duplicate ids, unknown modules, unknown sub-modules, sub-module parent mismatch, missing role, Admin empty-mapping conflict, empty non-Admin success, and mixed module/sub-module success.
-  - [ ] Assert successful `PUT` uses a Prisma transaction and returns normalized mapping ids.
-  - [ ] Component-test `AdminManagementTabs`: Modules tab is enabled and preserves Roles/Users behavior.
-  - [ ] Component-test `RoleModuleManagement`: renders hierarchy, loads existing selection, checks/unchecks parents and children, saves changed mappings, clears a non-Admin role, shows validation/conflict errors, and keeps edited state after failures.
-  - [ ] Unit-test `getAllowedMenuSections`: a successful BFF response with `modules: []` returns an empty role-driven menu instead of the hardcoded default menu.
-  - [ ] Update BFF `roles.unit.test.ts` only if mapping response assumptions need an explicit regression test for changed role-module semantics.
+- [x] Add focused tests (AC: 1-12)
+  - [x] Unit-test `GET /api/admin/modules`: denies non-admin, returns sorted modules with nested sub-modules, and omits unrelated fields.
+  - [x] Unit-test `GET /api/admin/roles/[roleId]/modules`: denies non-admin, invalid role id, missing role, empty mappings, and populated mappings.
+  - [x] Unit-test `PUT /api/admin/roles/[roleId]/modules`: malformed JSON, missing/non-array fields, invalid ids, duplicate ids, unknown modules, unknown sub-modules, sub-module parent mismatch, missing role, Admin empty-mapping conflict, empty non-Admin success, and mixed module/sub-module success.
+  - [x] Assert successful `PUT` uses a Prisma transaction and returns normalized mapping ids.
+  - [x] Component-test `AdminManagementTabs`: Modules tab is enabled and preserves Roles/Users behavior.
+  - [x] Component-test `RoleModuleManagement`: renders hierarchy, loads existing selection, checks/unchecks parents and children, saves changed mappings, clears a non-Admin role, shows validation/conflict errors, and keeps edited state after failures.
+  - [x] Unit-test `getAllowedMenuSections`: a successful BFF response with `modules: []` returns an empty role-driven menu instead of the hardcoded default menu.
+  - [x] Update BFF `roles.unit.test.ts` only if mapping response assumptions need an explicit regression test for changed role-module semantics.
 
 ## Dev Notes
 
@@ -352,10 +352,49 @@ gpt-5.5
 
 ### Debug Log References
 
+- 2026-08-08: Resolved `bmad-dev-story` workflow customization; no activation append/prepend steps.
+- 2026-08-08: Focused unit validation passed: `npm.cmd run test:unit --workspace=apps/web -- admin-modules.unit.test admin-modules-api.unit.test admin-role-modules.unit.test AdminManagementTabs.unit.test RoleModuleManagement.unit.test role-menu.unit.test page.unit.test` (29 files, 177 tests).
+- 2026-08-08: Type validation passed: `npm.cmd run type-check`.
+- 2026-08-08: Full regression validation passed: `npm.cmd run test` (web unit/integration and BFF unit/integration).
+- 2026-08-08: E2E validation passed: `npm.cmd run test:e2e --workspace=apps/web` (2 passed, 1 skipped because E2E credentials are not configured).
+- 2026-08-08: Lint check attempted: `npm.cmd run lint --workspace=apps/web`; existing `next lint` script fails under the installed Next CLI with `Invalid project directory provided ... apps\web\lint`.
+
+### Implementation Plan
+
+- Confirmed Story 4.5 implementation files already exist and align with the Dev Notes patterns from Stories 4.2-4.4.
+- Validated shared DTOs, Prisma mappers, admin-only APIs, Modules tab UI, role-module editor behavior, and successful empty role-menu handling.
+- Preserved existing dirty worktree changes unrelated to this story and updated only BMAD story/tracker metadata in this pass.
+
 ### Completion Notes List
 
+- Added shared admin module and role-module mapping DTO contracts while preserving existing public shared type compatibility.
+- Added reusable admin module mapping helpers for sorted module summaries, selected role-module mapping DTOs, and positive integer id normalization.
+- Added admin-only module list and role-module mapping APIs with admin authorization, defensive validation, atomic replacement semantics, Admin-role empty-access protection, and sanitized audit logging.
+- Enabled the Modules tab, loaded module summaries on the admin page after admin authorization, and added the `RoleModuleManagement` editor for role-scoped checkbox mapping.
+- Updated role-menu behavior so successful empty BFF permission responses produce an empty menu instead of falling back to default modules, while preserving fallback behavior for failures and Admin nav injection.
+- Added focused helper, API, page, component, and role-menu regression tests covering AC 1-12.
+
 ### File List
+
+- packages/shared-types/src/index.ts
+- apps/web/src/lib/admin-modules.ts
+- apps/web/src/lib/admin-modules.unit.test.ts
+- apps/web/src/app/api/admin/modules/route.ts
+- apps/web/src/app/api/admin/modules/admin-modules-api.unit.test.ts
+- apps/web/src/app/api/admin/roles/[roleId]/modules/route.ts
+- apps/web/src/app/api/admin/roles/[roleId]/modules/admin-role-modules.unit.test.ts
+- apps/web/src/app/admin/page.tsx
+- apps/web/src/app/admin/page.unit.test.tsx
+- apps/web/src/components/admin/AdminManagementTabs.tsx
+- apps/web/src/components/admin/RoleModuleManagement.tsx
+- apps/web/src/tests/unit/AdminManagementTabs.unit.test.tsx
+- apps/web/src/tests/unit/RoleModuleManagement.unit.test.tsx
+- apps/web/src/lib/role-menu.ts
+- apps/web/src/lib/role-menu.unit.test.ts
+- _bmad-output/implementation-artifacts/4-5-admin-panel-role-module-mapping-crud.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
 
 ### Change Log
 
 - 2026-07-29: Created Story 4.5 context for admin role-module mapping CRUD and set status to ready-for-dev.
+- 2026-08-08: Completed Story 4.5 role-module mapping CRUD implementation validation; marked story ready for review.

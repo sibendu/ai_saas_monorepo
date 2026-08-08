@@ -237,7 +237,7 @@ export default function RoleModuleManagement({
     return (
       <section className="space-y-5">
         <div className="bg-white rounded-lg shadow p-4 sm:p-5">
-          <h2 className="text-lg font-semibold text-gray-900">Role module access</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Role-Module</h2>
           <p className="mt-1 text-sm text-gray-500">No roles have been created yet.</p>
         </div>
       </section>
@@ -251,7 +251,7 @@ export default function RoleModuleManagement({
       <div className="bg-white rounded-lg shadow p-4 sm:p-5">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(12rem,18rem)_auto] lg:items-end">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Role module access</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Role-Module</h2>
             <p className="mt-1 text-sm text-gray-500">
               Select a role and update its visible modules.
             </p>

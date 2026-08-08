@@ -269,6 +269,98 @@ REDIS_URL=redis://redis.internal:6379
 
 ---
 
+## Database Backup and Restore
+
+The repository includes manual PostgreSQL logical backup helpers for local, staging, and recovery
+drill operations:
+
+- `scripts/backup.sh`
+- `scripts/restore.sh`
+
+These scripts require `bash`, `pg_dump`, `pg_restore`, and network access to the target PostgreSQL
+server. On Windows, run them through Git Bash or WSL, or ensure `bash` and PostgreSQL client tools
+are available on `PATH`.
+
+### Backup
+
+Run a backup with an operator-supplied database URL:
+
+```bash
+DATABASE_URL=postgresql://user:password@host:5432/database ./scripts/backup.sh
+```
+
+The backup script writes a PostgreSQL custom-format archive to `backups/` using this filename
+shape:
+
+```text
+<database-name>-<YYYYMMDDTHHMMSSZ>.dump
+```
+
+The default directory can be changed with `BACKUP_DIR` or a first positional argument:
+
+```bash
+DATABASE_URL=postgresql://user:password@host:5432/database BACKUP_DIR=/secure/backups ./scripts/backup.sh
+DATABASE_URL=postgresql://user:password@host:5432/database ./scripts/backup.sh /secure/backups
+```
+
+The same command is available through npm from the repository root:
+
+```bash
+npm run db:backup
+```
+
+### Restore
+
+Restore is destructive because it runs `pg_restore --clean --if-exists`. Rehearse production
+restores against a disposable local or staging database first. Create the target database separately
+with `createdb` or provider tooling when needed; the script does not create databases.
+
+Use an explicit restore target and explicit confirmation for noninteractive runs:
+
+```bash
+RESTORE_DATABASE_URL=postgresql://user:password@host:5432/disposable_restore \
+  CONFIRM_RESTORE=yes \
+  ./scripts/restore.sh backups/<file>.dump
+```
+
+The npm equivalent is:
+
+```bash
+npm run db:restore -- backups/<file>.dump
+```
+
+When `CONFIRM_RESTORE=yes` is not set, `restore.sh` only proceeds from an interactive TTY after
+the operator types `restore`. If `RESTORE_DATABASE_URL` is not set, the script refuses to fall back
+to `DATABASE_URL` unless `CONFIRM_RESTORE=yes` is present.
+
+### Restore Validation
+
+For a disposable restore validation, compare representative row counts between the source database
+and restored database for tables that exist:
+
+```bash
+psql "$DATABASE_URL" -c "select 'customer' as table_name, count(*) from customer union all select 'role', count(*) from role union all select 'module', count(*) from module union all select 'sub_module', count(*) from sub_module union all select 'role_module', count(*) from role_module union all select 'user_role', count(*) from user_role union all select 'task', count(*) from task union all select 'audit_log', count(*) from audit_log;"
+
+psql "$RESTORE_DATABASE_URL" -c "select 'customer' as table_name, count(*) from customer union all select 'role', count(*) from role union all select 'module', count(*) from module union all select 'sub_module', count(*) from sub_module union all select 'role_module', count(*) from role_module union all select 'user_role', count(*) from user_role union all select 'task', count(*) from task union all select 'audit_log', count(*) from audit_log;"
+```
+
+### Production Handling
+
+Use managed encrypted backups and point-in-time recovery as the primary production backup strategy
+where available. These scripts are manual logical backup/restore helpers and do not replace managed
+snapshot policies, recovery objectives, or provider recovery workflows.
+
+Backup archives can contain personal data, password hashes, reset token hashes, audit records, and
+role mappings. Keep backup files encrypted, access-controlled, and outside source control. The
+repository ignores `backups/`, but operators are still responsible for protecting archives in
+storage and transit.
+
+PostgreSQL custom-format backups do not include cluster-global roles or tablespaces. If a deployment
+depends on global objects, capture them separately with `pg_dumpall --globals-only` and protect that
+output with the same credential and archive controls.
+
+---
+
 ## Database Encryption At Rest
 
 ### Phase 1 Strategy
@@ -320,9 +412,10 @@ showing that database storage, backups, snapshots, replicas, and retained logs a
 
 ### Kubernetes and Self-Hosted PostgreSQL
 
-No checked-in `k8s/` directory exists yet, so these snippets are deployment guidance rather than a
-complete Kubernetes stack. When Story 8.3 adds generic manifests, the PostgreSQL data volume must
-use an encrypted storage class or a provider-managed encrypted disk.
+Generic provider-neutral Kubernetes manifests live in [`k8s/`](k8s/). For manifest-specific
+replacement, apply, validation, and verification steps, see [`k8s/README.md`](k8s/README.md).
+When running PostgreSQL in Kubernetes, the PostgreSQL data volume must use an encrypted storage
+class or a provider-managed encrypted disk.
 
 Kubernetes Secret API encryption protects API objects such as Secret resources in etcd. It does not
 encrypt mounted PostgreSQL data files under the database data directory. Configure both controls

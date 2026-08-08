@@ -24,6 +24,15 @@ dist/
 .env.local
 .env.*.local
 
+# Database backups
+backups/
+backups/*.dump
+backups/*.backup
+backups/*.sql
+backups/*.tar
+backups/*.gz
+backups/*.zip
+
 # Logs
 *.log
 npm-debug.log*

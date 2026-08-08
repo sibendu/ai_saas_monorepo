@@ -1,5 +1,5 @@
 import './load-env';
-import { PrismaClient as GeneratedPrismaClient } from '../../../web/node_modules/.prisma/client';
+import { PrismaClient as GeneratedPrismaClient } from '@prisma/client';
 
 const globalForPrisma = globalThis as unknown as {
   prisma: GeneratedPrismaClient | undefined;

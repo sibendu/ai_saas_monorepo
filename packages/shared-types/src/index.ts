@@ -105,6 +105,12 @@ export interface AdminModulesData {
   modules: AdminModuleSummary[];
 }
 
+export interface AdminModuleMutationRequest {
+  label: string;
+  icon?: string | null;
+  href?: string | null;
+}
+
 export interface AdminRoleModuleMappingData {
   roleId: string;
   moduleIds: string[];

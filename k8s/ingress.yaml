@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: saas-web-ingress
+  namespace: saas-foundation
+  labels:
+    app.kubernetes.io/name: saas-web
+    app.kubernetes.io/component: web
+    app.kubernetes.io/part-of: saas-foundation
+spec:
+  rules:
+    - host: example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: saas-web-service
+                port:
+                  number: 80

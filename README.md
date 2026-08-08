@@ -82,6 +82,10 @@ npm run dev:web   # Next.js on http://localhost:3000
 npm run dev:bff   # BFF on http://localhost:3001
 ```
 
+### Theme Customization
+
+The web app loads static theme stylesheets from `apps/web/public/` at startup. For custom brand themes, copy the example stylesheet and follow the guide in [docs/theme-customization.md](docs/theme-customization.md).
+
 ### Test
 
 npm run test - this will run all tests other than e2e

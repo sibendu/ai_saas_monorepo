@@ -1,5 +1,5 @@
 # generated: 2026-07-17T20:39:12.1567933+05:30
-# last_updated: 2026-07-29T20:55:13+05:30
+# last_updated: 2026-08-08
 # project: saas_monorepo
 # project_key: NOKEY
 # tracking_system: file-system
@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-17T20:39:12.1567933+05:30
-last_updated: 2026-07-29T20:55:13+05:30
+last_updated: 2026-08-08
 project: saas_monorepo
 project_key: NOKEY
 tracking_system: file-system
@@ -77,16 +77,16 @@ development_status:
   4-2-admin-panel-role-management-crud: done
   4-3-admin-panel-user-management-list-edit-view-roles: review
   4-4-admin-panel-user-role-assignment-many-to-many: review
-  4-5-admin-panel-role-module-mapping-crud: ready-for-dev
-  4-6-admin-panel-audit-trail-logging: ready-for-dev
+  4-5-admin-panel-role-module-mapping-crud: review
+  4-6-admin-panel-audit-trail-logging: review
   epic-4-retrospective: optional
 
-  epic-5: backlog
-  5-1-define-css-variables-for-theme-colors-fonts-spacing: backlog
-  5-2-integrate-css-variables-with-tailwind-config: backlog
-  5-3-create-light-dark-themes: backlog
-  5-4-config-driven-theme-loading-env-var-or-config-file: backlog
-  5-5-provide-custom-theme-extension-documentation: backlog
+  epic-5: in-progress
+  5-1-define-css-variables-for-theme-colors-fonts-spacing: review
+  5-2-integrate-css-variables-with-tailwind-config: review
+  5-3-create-light-dark-themes: review
+  5-4-config-driven-theme-loading-env-var-or-config-file: review
+  5-5-provide-custom-theme-extension-documentation: review
   epic-5-retrospective: optional
 
   epic-6: done
@@ -103,10 +103,10 @@ development_status:
 
   epic-8: in-progress
   8-1-docker-compose-setup-local-dev: in-progress
-  8-2-docker-images-multi-stage-builds: backlog
-  8-3-kubernetes-manifests-generic: backlog
-  8-4-database-backup-restore-scripts: backlog
+  8-2-docker-images-multi-stage-builds: review
+  8-3-kubernetes-manifests-generic: review
+  8-4-database-backup-restore-scripts: review
   8-5-seed-data-script: in-progress
-  8-6-smoke-tests-post-deployment-validation: backlog
-  8-7-deployment-documentation: backlog
+  8-6-smoke-tests-post-deployment-validation: ready-for-dev
+  8-7-deployment-documentation: ready-for-dev
   epic-8-retrospective: optional

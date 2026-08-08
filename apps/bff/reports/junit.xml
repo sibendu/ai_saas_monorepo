@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="6" failures="0" errors="0" time="0.2563552">
-    <testsuite name="src/tests/integration/api.integration.test.ts" timestamp="2026-07-29T15:01:14.850Z" hostname="YY341663" tests="6" failures="0" errors="0" skipped="0" time="0.2563552">
-        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns customers list" time="0.1549516">
+<testsuites name="vitest tests" tests="6" failures="0" errors="0" time="0.2204521">
+    <testsuite name="src/tests/integration/api.integration.test.ts" timestamp="2026-08-08T16:30:14.527Z" hostname="YY341663" tests="6" failures="0" errors="0" skipped="0" time="0.2204521">
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns customers list" time="0.1353514">
         </testcase>
-        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns task list with required task fields" time="0.051203">
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns task list with required task fields" time="0.0467112">
         </testcase>
-        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; updates task fields from actions menu edit flow" time="0.0297351">
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; updates task fields from actions menu edit flow" time="0.0231374">
         </testcase>
-        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; deletes task after confirmation flow" time="0.0055041">
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; deletes task after confirmation flow" time="0.0040861">
         </testcase>
-        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns dashboard data for valid user payload" time="0.0067339">
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns dashboard data for valid user payload" time="0.0043875">
         </testcase>
-        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns 400 when dashboard request missing user email" time="0.0055163">
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns 400 when dashboard request missing user email" time="0.0051818">
         </testcase>
     </testsuite>
 </testsuites>

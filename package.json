@@ -26,6 +26,8 @@
     "db:deploy": "npm exec --workspace=apps/web -- prisma migrate deploy",
     "db:status": "npm exec --workspace=apps/web -- prisma migrate status",
     "db:studio": "npm exec --workspace=apps/web -- prisma studio",
+    "db:backup": "bash scripts/backup.sh",
+    "db:restore": "bash scripts/restore.sh",
     "db:seed": "npm run db:seed --workspace=apps/web"
   },
   "devDependencies": {

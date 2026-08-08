@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { getAdminAuthorizationMock, moduleFindManyMock } = vi.hoisted(() => ({
+const { getAdminAuthorizationMock, moduleCreateMock, moduleFindFirstMock, moduleFindManyMock } = vi.hoisted(() => ({
   getAdminAuthorizationMock: vi.fn(),
+  moduleCreateMock: vi.fn(),
+  moduleFindFirstMock: vi.fn(),
   moduleFindManyMock: vi.fn(),
 }))
 
@@ -12,6 +14,8 @@ vi.mock('@/lib/admin-auth', () => ({
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     module: {
+      create: moduleCreateMock,
+      findFirst: moduleFindFirstMock,
       findMany: moduleFindManyMock,
     },
   },
@@ -35,12 +39,14 @@ function authorizeAdmin() {
 describe('admin modules API', () => {
   beforeEach(() => {
     getAdminAuthorizationMock.mockReset()
+    moduleCreateMock.mockReset()
+    moduleFindFirstMock.mockReset()
     moduleFindManyMock.mockReset()
   })
 
-  it('exports GET only for the read-only module list', () => {
+  it('exports list and create handlers', () => {
     expect(route.GET).toEqual(expect.any(Function))
-    expect('POST' in route).toBe(false)
+    expect(route.POST).toEqual(expect.any(Function))
     expect('PUT' in route).toBe(false)
     expect('PATCH' in route).toBe(false)
     expect('DELETE' in route).toBe(false)
@@ -163,6 +169,58 @@ describe('admin modules API', () => {
     expect(JSON.stringify(payload)).not.toContain('roleLinks')
     expect(moduleFindManyMock).toHaveBeenCalledWith({
       orderBy: { label: 'asc' },
+      select: moduleWithSubModulesSelect,
+    })
+  })
+
+  it('creates a module with normalized optional fields', async () => {
+    authorizeAdmin()
+    moduleFindFirstMock.mockResolvedValue(null)
+    moduleCreateMock.mockResolvedValue({
+      id: 5,
+      label: 'Reports',
+      icon: 'BarChart',
+      href: null,
+      subModules: [],
+    })
+
+    const response = await route.POST(
+      new Request('http://localhost/api/admin/modules', {
+        method: 'POST',
+        body: JSON.stringify({
+          label: ' Reports ',
+          icon: ' BarChart ',
+          href: ' ',
+        }),
+      })
+    )
+
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: {
+        id: '5',
+        label: 'Reports',
+        icon: 'BarChart',
+        href: null,
+        subModules: [],
+      },
+      message: 'Module created successfully',
+    })
+    expect(response.status).toBe(201)
+    expect(moduleFindFirstMock).toHaveBeenCalledWith({
+      where: {
+        label: {
+          equals: 'Reports',
+          mode: 'insensitive',
+        },
+      },
+    })
+    expect(moduleCreateMock).toHaveBeenCalledWith({
+      data: {
+        label: 'Reports',
+        icon: 'BarChart',
+        href: null,
+      },
       select: moduleWithSubModulesSelect,
     })
   })
