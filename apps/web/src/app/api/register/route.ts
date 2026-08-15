@@ -3,9 +3,12 @@ import { startEmailActivationRegistration } from '@/lib/activation-registration'
 
 export async function POST(req: Request) {
     try {
-        const { name, email } = await req.json()
+        const { email, firstName, lastName, middleName, name } = await req.json()
 
         const result = await startEmailActivationRegistration({
+            firstName,
+            lastName,
+            middleName,
             name,
             email
         })

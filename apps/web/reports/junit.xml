@@ -1,43 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="18" failures="0" errors="0" time="1.8251515">
-    <testsuite name="src/config/theme.unit.test.ts" timestamp="2026-08-08T18:16:20.027Z" hostname="YY341663" tests="17" failures="0" errors="0" skipped="0" time="0.0131848">
-        <testcase classname="src/config/theme.unit.test.ts" name="theme config &gt; defaults to light when STYLE and THEME are missing" time="0.0026335">
+<testsuites name="vitest tests" tests="4" failures="0" errors="0" time="1.3262774">
+    <testsuite name="src/tests/unit/UserManagement.unit.test.tsx" timestamp="2026-08-15T15:59:33.241Z" hostname="YY341663" tests="2" failures="0" errors="0" skipped="0" time="1.3172384">
+        <testcase classname="src/tests/unit/UserManagement.unit.test.tsx" name="UserManagement &gt; renders each user with assigned groups" time="0.0241491">
         </testcase>
-        <testcase classname="src/config/theme.unit.test.ts" name="theme config &gt; defaults to light when STYLE is blank" time="0.0004683">
-        </testcase>
-        <testcase classname="src/config/theme.unit.test.ts" name="theme config &gt; falls back to THEME when STYLE is missing" time="0.0005001">
-        </testcase>
-        <testcase classname="src/config/theme.unit.test.ts" name="theme config &gt; resolves safe theme value light" time="0.000435">
-        </testcase>
-        <testcase classname="src/config/theme.unit.test.ts" name="theme config &gt; resolves safe theme value dark" time="0.0002025">
-        </testcase>
-        <testcase classname="src/config/theme.unit.test.ts" name="theme config &gt; resolves safe theme value  custom " time="0.0001756">
-        </testcase>
-        <testcase classname="src/config/theme.unit.test.ts" name="theme config &gt; resolves safe theme value BRAND-2026" time="0.0001906">
-        </testcase>
-        <testcase classname="src/config/theme.unit.test.ts" name="theme config &gt; falls back to light for unsafe theme value ../dark" time="0.0002652">
-        </testcase>
-        <testcase classname="src/config/theme.unit.test.ts" name="theme config &gt; falls back to light for unsafe theme value /theme-dark.css" time="0.0001894">
-        </testcase>
-        <testcase classname="src/config/theme.unit.test.ts" name="theme config &gt; falls back to light for unsafe theme value https://example.com/theme-dark.css" time="0.0002075">
-        </testcase>
-        <testcase classname="src/config/theme.unit.test.ts" name="theme config &gt; falls back to light for unsafe theme value javascript:alert(1)" time="0.0002013">
-        </testcase>
-        <testcase classname="src/config/theme.unit.test.ts" name="theme config &gt; falls back to light for unsafe theme value data:text/css,body{}" time="0.0001525">
-        </testcase>
-        <testcase classname="src/config/theme.unit.test.ts" name="theme config &gt; falls back to light for unsafe theme value dark.css" time="0.0001877">
-        </testcase>
-        <testcase classname="src/config/theme.unit.test.ts" name="theme config &gt; falls back to light for unsafe theme value dark?x=1" time="0.0001344">
-        </testcase>
-        <testcase classname="src/config/theme.unit.test.ts" name="theme config &gt; falls back to light for unsafe theme value dark_theme" time="0.0001345">
-        </testcase>
-        <testcase classname="src/config/theme.unit.test.ts" name="theme config &gt; falls back to light for unsafe theme value -dark" time="0.0001426">
-        </testcase>
-        <testcase classname="src/config/theme.unit.test.ts" name="theme config &gt; falls back to light for unsafe theme value dark-" time="0.0001384">
+        <testcase classname="src/tests/unit/UserManagement.unit.test.tsx" name="UserManagement &gt; updates profile and groups from the edit row" time="1.2898705">
         </testcase>
     </testsuite>
-    <testsuite name="src/tests/unit/AdminManagementTabs.unit.test.tsx" timestamp="2026-08-08T18:16:20.046Z" hostname="YY341663" tests="1" failures="0" errors="0" skipped="0" time="1.8119667">
-        <testcase classname="src/tests/unit/AdminManagementTabs.unit.test.tsx" name="AdminManagementTabs &gt; switches between roles, users, and enabled modules tabs" time="1.8036663">
+    <testsuite name="src/app/api/admin/users/admin-users.unit.test.ts" timestamp="2026-08-15T15:59:33.244Z" hostname="YY341663" tests="2" failures="0" errors="0" skipped="0" time="0.009039">
+        <testcase classname="src/app/api/admin/users/admin-users.unit.test.ts" name="admin users API &gt; rejects non-admin callers before listing users" time="0.0043905">
+        </testcase>
+        <testcase classname="src/app/api/admin/users/admin-users.unit.test.ts" name="admin users API &gt; returns users with read-only role summaries and omits sensitive fields" time="0.0020519">
         </testcase>
     </testsuite>
 </testsuites>

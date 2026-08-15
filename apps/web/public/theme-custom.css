@@ -357,3 +357,42 @@ aside.bg-white .bg-indigo-100 .text-indigo-800 {
 .focus\:ring-gray-400:focus {
   --tw-ring-color: rgb(var(--color-focus-ring) / 0.45) !important;
 }
+
+/* Keep desktop top-menu dropdowns readable inside the custom dark header. */
+header.sticky.bg-white > div:first-child .top-menu-dropdown.top-menu-dropdown {
+  background-color: rgb(var(--color-surface)) !important;
+  border-color: rgb(var(--color-border)) !important;
+  border-top-color: rgb(var(--color-primary)) !important;
+  color: rgb(var(--color-text)) !important;
+}
+
+header.sticky.bg-white > div:first-child .top-menu-dropdown.top-menu-dropdown .text-gray-900,
+header.sticky.bg-white > div:first-child .top-menu-dropdown.top-menu-dropdown .text-gray-800 {
+  color: rgb(var(--color-text)) !important;
+}
+
+header.sticky.bg-white > div:first-child .top-menu-dropdown.top-menu-dropdown .text-gray-700,
+header.sticky.bg-white > div:first-child .top-menu-dropdown.top-menu-dropdown .text-gray-600 {
+  color: rgb(var(--color-text-muted)) !important;
+}
+
+header.sticky.bg-white > div:first-child .top-menu-dropdown.top-menu-dropdown .text-gray-500,
+header.sticky.bg-white > div:first-child .top-menu-dropdown.top-menu-dropdown .text-gray-400 {
+  color: rgb(var(--color-text-subtle)) !important;
+}
+
+header.sticky.bg-white > div:first-child .top-menu-dropdown.top-menu-dropdown .text-indigo-700,
+header.sticky.bg-white > div:first-child .top-menu-dropdown.top-menu-dropdown .text-indigo-800 {
+  color: rgb(var(--color-primary-strong)) !important;
+}
+
+header.sticky.bg-white > div:first-child .top-menu-dropdown.top-menu-dropdown .hover\:bg-gray-100:hover,
+header.sticky.bg-white > div:first-child .top-menu-dropdown.top-menu-dropdown .hover\:bg-indigo-50:hover {
+  background-color: rgb(var(--color-surface-muted)) !important;
+  color: rgb(var(--color-text)) !important;
+}
+
+header.sticky.bg-white > div:first-child .top-menu-dropdown.top-menu-dropdown .bg-indigo-100 {
+  background-color: rgb(var(--color-primary-soft) / 0.88) !important;
+  color: rgb(var(--color-primary-strong)) !important;
+}

@@ -65,7 +65,7 @@ function ResetPasswordForm() {
       })
 
       if (signInResult?.ok) {
-        router.push('/dashboard')
+        router.push('/home')
         router.refresh()
       } else {
         router.push('/login')

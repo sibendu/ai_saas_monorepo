@@ -46,7 +46,7 @@ test('email registration sends activation request', async ({ page }) => {
   })
 })
 
-test('login to dashboard with configured credentials', async ({ page }) => {
+test('login to home with configured credentials', async ({ page }) => {
   test.skip(!process.env.E2E_LOGIN_EMAIL || !process.env.E2E_LOGIN_PASSWORD, 'E2E credentials not configured')
 
   await page.goto('/login')
@@ -59,8 +59,8 @@ test('login to dashboard with configured credentials', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Sign In' }).click()
 
-  await page.waitForURL('**/dashboard', { timeout: 15000 })
-  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
+  await page.waitForURL('**/home', { timeout: 15000 })
+  await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible()
 
   await demoPause(page, POST_LOGIN_HOLD_MS)
 })

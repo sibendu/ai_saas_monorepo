@@ -2,16 +2,17 @@
 
 import { FormEvent, useMemo, useState } from 'react'
 import {
-  AdminRoleSummary,
+  AdminUserGroupAssignmentRequest,
+  AdminUserGroupSummary,
   AdminUserMutationRequest,
-  AdminUserRoleAssignmentRequest,
   AdminUserSummary,
 } from '@saas/shared-types'
 import { readApiResponse } from '@/lib/client-api'
+import GroupsMultiSelect from './GroupsMultiSelect'
 
 interface UserManagementProps {
   initialUsers: AdminUserSummary[]
-  availableRoles: AdminRoleSummary[]
+  availableGroups: AdminUserGroupSummary[]
 }
 
 interface UserFormState {
@@ -34,68 +35,94 @@ function createFormState(user: AdminUserSummary): UserFormState {
   }
 }
 
-function createRoleSelectionState(users: AdminUserSummary[]): Record<string, string[]> {
-  return users.reduce<Record<string, string[]>>((selections, user) => {
-    selections[user.id] = user.roles.map((role) => role.id)
-
-    return selections
-  }, {})
+function formatStructuredName(user: AdminUserSummary): string {
+  return [user.firstName, user.middleName, user.lastName]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(' ') || user.name
 }
 
-export default function UserManagement({ initialUsers, availableRoles }: UserManagementProps) {
+export default function UserManagement({
+  initialUsers,
+  availableGroups,
+}: UserManagementProps) {
   const [users, setUsers] = useState<AdminUserSummary[]>(initialUsers)
   const [editingUserId, setEditingUserId] = useState<string | null>(null)
   const [editingState, setEditingState] = useState<UserFormState>(emptyForm)
-  const [roleSelections, setRoleSelections] = useState<Record<string, string[]>>(() =>
-    createRoleSelectionState(initialUsers)
-  )
+  const [editingGroupIds, setEditingGroupIds] = useState<string[]>([])
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
-  const [savingRolesUserId, setSavingRolesUserId] = useState<string | null>(null)
 
   const sortedUsers = useMemo(
     () => [...users].sort((first, second) => first.email.localeCompare(second.email)),
     [users]
   )
 
-  async function handleUpdateUser(event: FormEvent<HTMLFormElement>, userId: string) {
+  async function handleSave(event: FormEvent<HTMLFormElement>, userId: string) {
     event.preventDefault()
     setIsSaving(true)
     setStatusMessage(null)
     setErrorMessage(null)
 
     try {
+      // Step 1: Update user attributes
       const requestBody: AdminUserMutationRequest = {
         email: editingState.email,
         name: editingState.name,
         company: editingState.company,
       }
-      const response = await fetch(`/api/admin/users/${userId}`, {
+      const attributesResponse = await fetch(`/api/admin/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
       })
-      const payload = await readApiResponse<AdminUserSummary>(response, 'Failed to update user')
+      const attributesPayload = await readApiResponse<AdminUserSummary>(attributesResponse, 'Failed to update user')
 
-      if (!response.ok || !payload.success || !payload.data) {
-        throw new Error(payload.error ?? 'Failed to update user')
+      if (!attributesResponse.ok || !attributesPayload.success || !attributesPayload.data) {
+        throw new Error(attributesPayload.error ?? 'Failed to update user')
       }
 
-      const updatedUser = payload.data
+      const userWithUpdatedAttributes = attributesPayload.data
 
-      setUsers((currentUsers) =>
-        currentUsers.map((user) => (user.id === userId ? updatedUser : user))
+      const groupsRequestBody: AdminUserGroupAssignmentRequest = {
+        groupIds: editingGroupIds,
+      }
+      const groupsResponse = await fetch(`/api/admin/users/${userId}/groups`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(groupsRequestBody),
+      })
+      const groupsPayload = await readApiResponse<AdminUserSummary>(
+        groupsResponse,
+        'Failed to update groups'
       )
-      setRoleSelections((currentSelections) => ({
-        ...currentSelections,
-        [userId]: updatedUser.roles.map((role) => role.id),
-      }))
+
+      if (!groupsResponse.ok || !groupsPayload.success || !groupsPayload.data) {
+        setUsers((currentUsers) =>
+          currentUsers.map((user) => (user.id === userId ? userWithUpdatedAttributes : user))
+        )
+        setEditingUserId(null)
+        setEditingState(emptyForm)
+        setEditingGroupIds([])
+        setErrorMessage(
+          groupsPayload.error ?? 'Failed to update groups. User details were saved.'
+        )
+        return
+      }
+
+      const finalUser = groupsPayload.data
+      setUsers((currentUsers) =>
+        currentUsers.map((user) => (user.id === userId ? finalUser : user))
+      )
       setEditingUserId(null)
       setEditingState(emptyForm)
-      setStatusMessage(payload.message ?? 'User updated successfully')
+      setEditingGroupIds([])
+      setStatusMessage('User and groups updated successfully')
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Failed to update user')
     } finally {
@@ -106,66 +133,15 @@ export default function UserManagement({ initialUsers, availableRoles }: UserMan
   function startEditing(user: AdminUserSummary) {
     setEditingUserId(user.id)
     setEditingState(createFormState(user))
+    setEditingGroupIds(user.groups.map((group) => group.id))
     setStatusMessage(null)
     setErrorMessage(null)
   }
 
-  function toggleRoleSelection(userId: string, roleId: string) {
-    setRoleSelections((currentSelections) => {
-      const selectedRoleIds = currentSelections[userId] ?? []
-      const nextSelection = selectedRoleIds.includes(roleId)
-        ? selectedRoleIds.filter((selectedRoleId) => selectedRoleId !== roleId)
-        : [...selectedRoleIds, roleId]
-
-      return {
-        ...currentSelections,
-        [userId]: nextSelection,
-      }
-    })
-  }
-
-  async function handleUpdateRoles(user: AdminUserSummary) {
-    setSavingRolesUserId(user.id)
-    setStatusMessage(null)
-    setErrorMessage(null)
-
-    try {
-      const requestBody: AdminUserRoleAssignmentRequest = {
-        roleIds: roleSelections[user.id] ?? [],
-      }
-      const response = await fetch(`/api/admin/users/${user.id}/roles`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      })
-      const payload = await readApiResponse<AdminUserSummary>(
-        response,
-        'Failed to update user roles'
-      )
-
-      if (!response.ok || !payload.success || !payload.data) {
-        throw new Error(payload.error ?? 'Failed to update user roles')
-      }
-
-      const updatedUser = payload.data
-
-      setUsers((currentUsers) =>
-        currentUsers.map((currentUser) =>
-          currentUser.id === user.id ? updatedUser : currentUser
-        )
-      )
-      setRoleSelections((currentSelections) => ({
-        ...currentSelections,
-        [user.id]: updatedUser.roles.map((role) => role.id),
-      }))
-      setStatusMessage(payload.message ?? 'User roles updated successfully')
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to update user roles')
-    } finally {
-      setSavingRolesUserId(null)
-    }
+  function cancelEditing() {
+    setEditingUserId(null)
+    setEditingState(emptyForm)
+    setEditingGroupIds([])
   }
 
   return (
@@ -174,7 +150,7 @@ export default function UserManagement({ initialUsers, availableRoles }: UserMan
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Users</h2>
           <p className="mt-1 text-sm text-gray-500">
-            Maintain user profile details and verify assigned roles.
+            Maintain user profile details and assign users to groups.
           </p>
         </div>
 
@@ -191,13 +167,16 @@ export default function UserManagement({ initialUsers, availableRoles }: UserMan
           <thead className="bg-gray-50">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                User
+                Name (First, Middle, Last)
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Email
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Company
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                Roles
+                Groups
               </th>
               <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Actions
@@ -207,7 +186,7 @@ export default function UserManagement({ initialUsers, availableRoles }: UserMan
           <tbody className="divide-y divide-gray-100 bg-white">
             {sortedUsers.length === 0 ? (
               <tr>
-                <td className="px-4 py-6 text-center text-sm text-gray-500" colSpan={4}>
+                <td className="px-4 py-6 text-center text-sm text-gray-500" colSpan={5}>
                   No users were found.
                 </td>
               </tr>
@@ -218,8 +197,8 @@ export default function UserManagement({ initialUsers, availableRoles }: UserMan
                 return (
                   <tr key={user.id} className="align-top">
                     {isEditing ? (
-                      <td className="px-4 py-3 text-sm text-gray-600" colSpan={4}>
-                        <form className="grid gap-3 lg:grid-cols-[1fr_1fr_1fr_auto]" onSubmit={(event) => handleUpdateUser(event, user.id)}>
+                      <td className="px-4 py-3 text-sm text-gray-600" colSpan={5}>
+                        <form className="grid gap-3 lg:grid-cols-[1fr_1fr_1fr_1fr_auto]" onSubmit={(event) => handleSave(event, user.id)}>
                           <div>
                             <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500" htmlFor={`user-name-${user.id}`}>
                               Name
@@ -265,20 +244,29 @@ export default function UserManagement({ initialUsers, availableRoles }: UserMan
                               disabled={isSaving}
                             />
                           </div>
+                          <div>
+                            <label id={`user-groups-${user.id}-label`} className="block text-xs font-semibold uppercase tracking-wide text-gray-500" htmlFor={`user-groups-${user.id}`}>
+                              Groups
+                            </label>
+                            <GroupsMultiSelect
+                              id={`user-groups-${user.id}`}
+                              availableGroups={availableGroups}
+                              selectedGroupIds={editingGroupIds}
+                              onChange={setEditingGroupIds}
+                              disabled={isSaving}
+                            />
+                          </div>
                           <div className="flex items-end justify-end gap-2">
                             <button
                               type="submit"
                               className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:bg-indigo-300"
                               disabled={isSaving}
                             >
-                              {isSaving ? 'Saving...' : 'Save user'}
+                              {isSaving ? 'Saving…' : 'Save'}
                             </button>
                             <button
                               type="button"
-                              onClick={() => {
-                                setEditingUserId(null)
-                                setEditingState(emptyForm)
-                              }}
+                              onClick={cancelEditing}
                               className="rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
                               disabled={isSaving}
                             >
@@ -290,66 +278,21 @@ export default function UserManagement({ initialUsers, availableRoles }: UserMan
                     ) : (
                       <>
                         <td className="px-4 py-3 text-sm">
-                          <p className="font-medium text-gray-900">{user.name}</p>
-                          <p className="mt-1 text-gray-500">{user.email}</p>
+                          <p className="font-medium text-gray-900">{formatStructuredName(user)}</p>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {user.email}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">
                           {user.company ?? 'No company'}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">
-                          <div className="space-y-3">
-                            {user.roles.length > 0 ? (
-                              <div className="flex flex-wrap gap-2">
-                                {user.roles.map((role) => (
-                                  <span
-                                    key={role.id}
-                                    className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700"
-                                  >
-                                    {role.name}
-                                  </span>
-                                ))}
-                              </div>
-                            ) : (
-                              <p>No roles assigned</p>
-                            )}
-
-                            {availableRoles.length > 0 ? (
-                              <fieldset>
-                                <legend className="sr-only">Assign roles for {user.name}</legend>
-                                <div className="grid min-w-52 gap-2 sm:grid-cols-2">
-                                  {availableRoles.map((role) => {
-                                    const roleSelection = roleSelections[user.id] ?? []
-                                    const isChecked = roleSelection.includes(role.id)
-                                    const checkboxId = `user-${user.id}-role-${role.id}`
-
-                                    return (
-                                      <label
-                                        key={role.id}
-                                        className="flex items-center gap-2 rounded-md border border-gray-200 px-2.5 py-2 text-xs font-medium text-gray-700"
-                                        htmlFor={checkboxId}
-                                      >
-                                        <input
-                                          id={checkboxId}
-                                          type="checkbox"
-                                          className="h-4 w-4 rounded border-gray-300 text-indigo-600"
-                                          checked={isChecked}
-                                          onChange={() => toggleRoleSelection(user.id, role.id)}
-                                          disabled={savingRolesUserId === user.id}
-                                          aria-label={`${role.name} for ${user.name}`}
-                                        />
-                                        <span>{role.name}</span>
-                                      </label>
-                                    )
-                                  })}
-                                </div>
-                              </fieldset>
-                            ) : (
-                              <p className="text-sm text-gray-500">No available roles</p>
-                            )}
-                          </div>
+                          {user.groups.length > 0
+                            ? user.groups.map((group) => group.name).join(', ')
+                            : 'No groups assigned'}
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex flex-col items-end gap-2">
+                          <div className="flex justify-end">
                             <button
                               type="button"
                               onClick={() => startEditing(user)}
@@ -358,15 +301,6 @@ export default function UserManagement({ initialUsers, availableRoles }: UserMan
                               aria-label={`Edit ${user.name}`}
                             >
                               Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => void handleUpdateRoles(user)}
-                              className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:bg-indigo-300"
-                              disabled={availableRoles.length === 0 || savingRolesUserId === user.id}
-                              aria-label={`Save roles for ${user.name}`}
-                            >
-                              {savingRolesUserId === user.id ? 'Saving...' : 'Save roles'}
                             </button>
                           </div>
                         </td>

@@ -29,6 +29,7 @@ enum AdminAuditAction {
   ROLE_DELETED
   USER_UPDATED
   USER_ROLES_UPDATED
+  GROUP_ROLES_UPDATED
   ROLE_MODULES_UPDATED
 }
 
@@ -36,7 +37,18 @@ enum AdminAuditEntityType {
   ROLE
   CUSTOMER
   USER_ROLE
+  GROUP_ROLE
   ROLE_MODULE
+}
+
+enum AddressType {
+  PERMANENT
+  COMMUNICATION
+}
+
+enum ContactType {
+  MOBILE
+  OTHER
 }
 
 model Customer {
@@ -44,13 +56,77 @@ model Customer {
   email                  String           @map("username")
   password               String
   name                   String
+  firstName              String           @map("first_name") @db.VarChar(40)
+  middleName             String?          @map("middle_name") @db.VarChar(40)
+  lastName               String           @map("last_name") @db.VarChar(40)
+  dob                    DateTime?
   company                String?
   registrationType       RegistrationType @default(DIRECT) @map("registration_type")
   passwordResetToken     String?          @map("password_reset_token")
   passwordResetExpiresAt DateTime?        @map("password_reset_expires_at")
-  userRoles              UserRole[]
+  addresses              UserAddress[]
+  contacts               UserContact[]
+  userGroupMemberships   UserGroupMember[]
 
   @@map("customer")
+}
+
+model UserAddress {
+  id           Int         @id @default(autoincrement())
+  customerId   Int         @map("customer_id")
+  type         AddressType
+  addressLine1 String      @map("address_line_1") @db.VarChar(60)
+  addressLine2 String      @map("address_line_2") @db.VarChar(60)
+  addressLine3 String?     @map("address_line_3") @db.VarChar(60)
+  city         String      @db.VarChar(40)
+  district     String      @db.VarChar(40)
+  state        String      @db.VarChar(40)
+  country      String      @db.VarChar(40)
+  pin          String      @db.VarChar(12)
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+  customer     Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@map("user_address")
+}
+
+model UserContact {
+  id          Int         @id @default(autoincrement())
+  customerId  Int         @map("customer_id")
+  type        ContactType
+  countryCode String      @default("+91") @map("country_code") @db.VarChar(8)
+  contact     String      @db.VarChar(40)
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  customer    Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@map("user_contact")
+}
+
+model UserGroup {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  members     UserGroupMember[]
+  roles       GroupRole[]
+
+  @@map("user_group")
+}
+
+model UserGroupMember {
+  groupId    Int       @map("group_id")
+  customerId Int       @map("customer_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  group      UserGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, customerId])
+  @@index([customerId])
+  @@map("user_group_member")
 }
 
 model Task {
@@ -72,21 +148,27 @@ model Role {
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
   modules     RoleModule[]
-  users       UserRole[]
+  groups      GroupRole[]
 
   @@map("role")
 }
 
 model Module {
-  id         Int          @id @default(autoincrement())
-  label      String       @unique
-  icon       String?
-  href       String?
-  createdAt  DateTime     @default(now()) @map("created_at")
-  updatedAt  DateTime     @updatedAt @map("updated_at")
-  roleLinks  RoleModule[]
-  subModules SubModule[]
+  id             Int          @id @default(autoincrement())
+  parentModuleId Int?         @map("parent_module_id")
+  label          String       @unique
+  displayOrder   Int          @map("display_order")
+  icon           String?
+  href           String?
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  childModules   Module[]     @relation("ModuleHierarchy")
+  parentModule   Module?      @relation("ModuleHierarchy", fields: [parentModuleId], references: [id], onDelete: SetNull)
+  roleLinks      RoleModule[]
+  subModules     SubModule[]
 
+  @@index([parentModuleId])
+  @@index([parentModuleId, displayOrder])
   @@map("module")
 }
 
@@ -94,6 +176,7 @@ model SubModule {
   id        Int          @id @default(autoincrement())
   moduleId  Int          @map("module_id")
   label     String
+  displayOrder Int       @map("display_order")
   icon      String?
   href      String
   createdAt DateTime     @default(now()) @map("created_at")
@@ -103,6 +186,7 @@ model SubModule {
 
   @@unique([moduleId, label])
   @@unique([moduleId, href])
+  @@index([moduleId, displayOrder])
   @@map("sub_module")
 }
 
@@ -121,15 +205,16 @@ model RoleModule {
   @@map("role_module")
 }
 
-model UserRole {
-  customerId Int      @map("customer_id")
-  roleId     Int      @map("role_id")
-  createdAt  DateTime @default(now()) @map("created_at")
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+model GroupRole {
+  groupId   Int       @map("group_id")
+  roleId    Int       @map("role_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  group     UserGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  role      Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
-  @@id([customerId, roleId])
-  @@map("user_role")
+  @@id([groupId, roleId])
+  @@index([roleId])
+  @@map("group_role")
 }
 
 model AuditLog {

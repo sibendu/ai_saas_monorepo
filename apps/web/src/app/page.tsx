@@ -10,7 +10,7 @@ export default async function Home() {
     if ((session.user as any)?.isNewUser) {
       redirect('/preferences')
     } else {
-      redirect('/dashboard')
+      redirect('/home')
     }
   } else {
     redirect('/login')

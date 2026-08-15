@@ -31,6 +31,50 @@ function normalizeModuleLabel(label: unknown): string {
   return typeof label === 'string' ? label.trim() : ''
 }
 
+function parseOptionalModuleId(moduleId: unknown): number | null {
+  if (moduleId === null || moduleId === undefined || moduleId === '') {
+    return null
+  }
+
+  if (typeof moduleId !== 'string' || !/^[1-9]\d*$/.test(moduleId)) {
+    return Number.NaN
+  }
+
+  const parsedModuleId = Number(moduleId)
+
+  return Number.isSafeInteger(parsedModuleId) ? parsedModuleId : Number.NaN
+}
+
+function parseDisplayOrder(displayOrder: unknown): number | null {
+  if (typeof displayOrder !== 'number' || !Number.isSafeInteger(displayOrder) || displayOrder < 1) {
+    return null
+  }
+
+  return displayOrder
+}
+
+async function wouldCreateModuleCycle(moduleId: number, parentModuleId: number): Promise<boolean> {
+  let currentParentId: number | null = parentModuleId
+  const visitedModuleIds = new Set<number>()
+
+  while (currentParentId) {
+    if (currentParentId === moduleId || visitedModuleIds.has(currentParentId)) {
+      return true
+    }
+
+    visitedModuleIds.add(currentParentId)
+
+    const parentModule: { parentModuleId: number | null } | null = await prisma.module.findUnique({
+      where: { id: currentParentId },
+      select: { parentModuleId: true },
+    })
+
+    currentParentId = parentModule?.parentModuleId ?? null
+  }
+
+  return false
+}
+
 async function readModuleMutationRequest(
   request: Request
 ): Promise<Partial<AdminModuleMutationRequest> | null> {
@@ -89,6 +133,24 @@ export async function PUT(request: Request, context: RouteContext): Promise<Next
       )
     }
 
+    const parentModuleId = parseOptionalModuleId(body.parentModuleId)
+
+    if (Number.isNaN(parentModuleId)) {
+      return NextResponse.json<ApiResponse<never>>(
+        { success: false, error: 'Parent module id must be a positive integer' },
+        { status: 400 }
+      )
+    }
+
+    const displayOrder = parseDisplayOrder(body.displayOrder)
+
+    if (!displayOrder) {
+      return NextResponse.json<ApiResponse<never>>(
+        { success: false, error: 'Order must be a positive integer' },
+        { status: 400 }
+      )
+    }
+
     const currentModule = await prisma.module.findUnique({
       where: { id: parsedModuleId },
       select: { id: true },
@@ -99,6 +161,34 @@ export async function PUT(request: Request, context: RouteContext): Promise<Next
         { success: false, error: 'Module not found' },
         { status: 404 }
       )
+    }
+
+    if (parentModuleId === parsedModuleId) {
+      return NextResponse.json<ApiResponse<never>>(
+        { success: false, error: 'A module cannot be its own parent' },
+        { status: 400 }
+      )
+    }
+
+    if (parentModuleId) {
+      const parentModule = await prisma.module.findUnique({
+        where: { id: parentModuleId },
+        select: { id: true },
+      })
+
+      if (!parentModule) {
+        return NextResponse.json<ApiResponse<never>>(
+          { success: false, error: 'Parent module not found' },
+          { status: 400 }
+        )
+      }
+
+      if (await wouldCreateModuleCycle(parsedModuleId, parentModuleId)) {
+        return NextResponse.json<ApiResponse<never>>(
+          { success: false, error: 'Parent module cannot be a descendant' },
+          { status: 400 }
+        )
+      }
     }
 
     const existingModule = await prisma.module.findFirst({
@@ -124,6 +214,8 @@ export async function PUT(request: Request, context: RouteContext): Promise<Next
       where: { id: parsedModuleId },
       data: {
         label,
+        parentModuleId,
+        displayOrder,
         icon: normalizeOptionalString(body.icon),
         href: normalizeOptionalString(body.href),
       },
@@ -186,6 +278,7 @@ export async function DELETE(_request: Request, context: RouteContext): Promise<
       include: {
         _count: {
           select: {
+            childModules: true,
             roleLinks: true,
           },
         },
@@ -196,6 +289,13 @@ export async function DELETE(_request: Request, context: RouteContext): Promise<
       return NextResponse.json<ApiResponse<never>>(
         { success: false, error: 'Module not found' },
         { status: 404 }
+      )
+    }
+
+    if (module._count.childModules > 0) {
+      return NextResponse.json<ApiResponse<never>>(
+        { success: false, error: 'Module cannot be deleted while it has child modules' },
+        { status: 409 }
       )
     }
 

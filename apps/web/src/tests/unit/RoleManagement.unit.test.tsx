@@ -10,7 +10,7 @@ const initialRoles = [
     id: '1',
     name: 'Admin',
     description: 'Full access',
-    userCount: 1,
+    groupCount: 1,
     moduleCount: 3,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-02T00:00:00.000Z',
@@ -30,7 +30,7 @@ describe('RoleManagement', () => {
               id: '2',
               name: 'Support',
               description: 'Support desk access',
-              userCount: 0,
+              groupCount: 0,
               moduleCount: 0,
               createdAt: '2026-01-03T00:00:00.000Z',
               updatedAt: '2026-01-03T00:00:00.000Z',
@@ -60,7 +60,7 @@ describe('RoleManagement', () => {
         HttpResponse.json(
           {
             success: false,
-            error: 'Role cannot be deleted while it has assigned users or module access',
+            error: 'Role cannot be deleted while it has assigned groups or module access',
           },
           { status: 409 }
         )
@@ -80,7 +80,7 @@ describe('RoleManagement', () => {
     await user.click(screen.getByRole('button', { name: 'Delete' }))
 
     expect(
-      await screen.findByText('Role cannot be deleted while it has assigned users or module access')
+      await screen.findByText('Role cannot be deleted while it has assigned groups or module access')
     ).toBeInTheDocument()
     expect(confirmMock).toHaveBeenCalledWith('Delete role "Admin"?')
 

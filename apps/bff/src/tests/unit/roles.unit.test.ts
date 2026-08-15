@@ -6,7 +6,7 @@ vi.mock('../../lib/prisma', () => ({
   getPrismaClient: vi.fn(),
 }));
 
-import { createRolesRouter, resolveAllowedModules } from '../../routes/roles';
+import { createRolesRouter, resolveAllConfiguredModules, resolveAllowedModules } from '../../routes/roles';
 
 function createRolesTestApp(prismaClient: unknown) {
   const app = express();
@@ -18,7 +18,7 @@ function createRolesTestApp(prismaClient: unknown) {
 describe('roles route', () => {
   it('returns 400 when email is missing', async () => {
     const app = createRolesTestApp({
-      userRole: {
+      userGroupMember: {
         findMany: vi.fn(),
       },
     });
@@ -37,23 +37,33 @@ describe('roles route', () => {
   it('returns role-filtered modules for the requested user email', async () => {
     const findMany = vi.fn().mockResolvedValue([
       {
-        role: {
-          id: 1,
-          name: 'Sales',
-          description: 'Sales access',
-          modules: [
+        group: {
+          roles: [
             {
-              module: {
-                id: 10,
-                label: 'CRM',
-                icon: 'users',
-                href: null,
-              },
-              subModule: {
-                id: 20,
-                label: 'Leads',
-                icon: 'users',
-                href: '/leads',
+              role: {
+                id: 1,
+                name: 'Sales',
+                description: 'Sales access',
+                modules: [
+                  {
+                    module: {
+                      id: 10,
+                      parentModuleId: null,
+                      label: 'CRM',
+                      displayOrder: 1,
+                      icon: 'users',
+                      href: null,
+                      parentModule: null,
+                    },
+                    subModule: {
+                      id: 20,
+                      label: 'Leads',
+                      displayOrder: 1,
+                      icon: 'users',
+                      href: '/leads',
+                    },
+                  },
+                ],
               },
             },
           ],
@@ -61,7 +71,7 @@ describe('roles route', () => {
       },
     ]);
     const app = createRolesTestApp({
-      userRole: {
+      userGroupMember: {
         findMany,
       },
     });
@@ -117,13 +127,17 @@ describe('roles route', () => {
             {
               module: {
                 id: 10,
+                parentModuleId: null,
                 label: 'CRM',
+                displayOrder: 1,
                 icon: 'users',
                 href: null,
+                parentModule: null,
               },
               subModule: {
                 id: 20,
                 label: 'Leads',
+                displayOrder: 1,
                 icon: 'users',
                 href: '/leads',
               },
@@ -140,13 +154,17 @@ describe('roles route', () => {
             {
               module: {
                 id: 10,
+                parentModuleId: null,
                 label: 'CRM',
+                displayOrder: 1,
                 icon: 'users',
                 href: null,
+                parentModule: null,
               },
               subModule: {
                 id: 20,
                 label: 'Leads',
+                displayOrder: 1,
                 icon: 'users',
                 href: '/leads',
               },
@@ -158,5 +176,125 @@ describe('roles route', () => {
 
     expect(modules).toHaveLength(1);
     expect(modules[0].subModules).toHaveLength(1);
+  });
+
+  it('groups child module rows under their configured parent module in display order', () => {
+    const modules = resolveAllowedModules([
+      {
+        role: {
+          id: 1,
+          name: 'Admin',
+          description: null,
+          modules: [
+            {
+              module: {
+                id: 53,
+                parentModuleId: 50,
+                label: 'Groups',
+                displayOrder: 3,
+                icon: 'users',
+                href: '/admin/groups',
+                parentModule: {
+                  id: 50,
+                  parentModuleId: null,
+                  label: 'Admin',
+                  displayOrder: 5,
+                  icon: 'settings',
+                  href: null,
+                },
+              },
+              subModule: null,
+            },
+            {
+              module: {
+                id: 51,
+                parentModuleId: 50,
+                label: 'Roles',
+                displayOrder: 1,
+                icon: 'settings',
+                href: '/admin/roles',
+                parentModule: {
+                  id: 50,
+                  parentModuleId: null,
+                  label: 'Admin',
+                  displayOrder: 5,
+                  icon: 'settings',
+                  href: null,
+                },
+              },
+              subModule: null,
+            },
+          ],
+        },
+      },
+    ]);
+
+    expect(modules).toEqual([
+      {
+        id: '50',
+        label: 'Admin',
+        displayOrder: 5,
+        icon: 'settings',
+        href: null,
+        subModules: [
+          {
+            id: '51',
+            label: 'Roles',
+            displayOrder: 1,
+            icon: 'settings',
+            href: '/admin/roles',
+          },
+          {
+            id: '53',
+            label: 'Groups',
+            displayOrder: 3,
+            icon: 'users',
+            href: '/admin/groups',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('includes unmapped configured modules for admin full access menus', () => {
+    const modules = resolveAllConfiguredModules([
+      {
+        id: 34,
+        parentModuleId: null,
+        label: 'Marketing',
+        displayOrder: 5,
+        icon: null,
+        href: '/marketing',
+        childModules: [
+          {
+            id: 35,
+            label: 'Campaign',
+            displayOrder: 1,
+            icon: null,
+            href: '/campaign',
+          },
+        ],
+        subModules: [],
+      },
+    ]);
+
+    expect(modules).toEqual([
+      {
+        id: '34',
+        label: 'Marketing',
+        displayOrder: 5,
+        icon: null,
+        href: '/marketing',
+        subModules: [
+          {
+            id: '35',
+            label: 'Campaign',
+            displayOrder: 1,
+            icon: null,
+            href: '/campaign',
+          },
+        ],
+      },
+    ]);
   });
 });

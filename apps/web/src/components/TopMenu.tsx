@@ -126,7 +126,7 @@ export default function TopMenu({
                 <Icon name={isMobileMenuOpen ? menuUiConfig.mobileCloseIcon : menuUiConfig.mobileOpenIcon} />
               </button>
             )}
-            <Link href="/dashboard" className="text-lg font-bold text-indigo-700 whitespace-nowrap">
+            <Link href="/home" className="text-lg font-bold text-indigo-700 whitespace-nowrap">
               SaaS Platform
             </Link>
           </div>
@@ -186,7 +186,7 @@ export default function TopMenu({
                     <div
                       id={dropdownId}
                       role="menu"
-                      className={`w-72 rounded-b-xl border border-t-4 border-t-indigo-600 ${menuUiConfig.borderClass} bg-white shadow-xl p-3`}
+                      className={`top-menu-dropdown w-72 rounded-b-xl border border-t-4 border-t-indigo-600 ${menuUiConfig.borderClass} bg-white shadow-xl p-3`}
                     >
                       <div className="px-3 pb-2 text-xs font-bold uppercase tracking-wide text-indigo-700">
                         {section.label}
@@ -273,9 +273,11 @@ export default function TopMenu({
         )}
       </header>
 
-      <div className={`border-b ${menuUiConfig.borderClass} bg-white px-4 py-4 md:px-6`}>
-        <h1 className="text-lg md:text-xl font-semibold text-gray-900">{pageTitle}</h1>
-        {pageSubtitle && <p className="text-sm text-gray-500">{pageSubtitle}</p>}
+      <div className={`border-b ${menuUiConfig.borderClass} bg-white px-4 py-3 md:px-6`}>
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-3">
+          <h1 className="text-lg md:text-xl font-semibold text-gray-900">{pageTitle}</h1>
+          {pageSubtitle && <p className="text-sm text-gray-500">{pageSubtitle}</p>}
+        </div>
       </div>
 
       <main className="p-4 md:p-6">{children}</main>

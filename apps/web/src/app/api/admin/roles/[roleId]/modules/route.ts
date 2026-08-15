@@ -131,7 +131,7 @@ export async function PUT(request: Request, context: RouteContext): Promise<Next
       return jsonError('subModuleIds must be an array', 400)
     }
 
-    const moduleIds = normalizePositiveIntegerStringIds(body.moduleIds)
+    let moduleIds = normalizePositiveIntegerStringIds(body.moduleIds)
 
     if (!moduleIds) {
       return jsonError('Module ids must be unique positive integers', 400)
@@ -188,16 +188,10 @@ export async function PUT(request: Request, context: RouteContext): Promise<Next
         return jsonError('One or more sub-modules were not found', 400)
       }
 
-      const selectedModuleIds = new Set(moduleIds)
-      const hasParentMismatch = selectedSubModules.some(
-        (subModule) => !selectedModuleIds.has(subModule.moduleId)
-      )
-
-      if (hasParentMismatch) {
-        return jsonError('Sub-module does not belong to a selected module', 400)
-      }
-
       selectedSubModules = selectedSubModules.sort((left, right) => left.id - right.id)
+      moduleIds = [...new Set([...moduleIds, ...selectedSubModules.map((subModule) => subModule.moduleId)])].sort(
+        (left, right) => left - right
+      )
     }
 
     if (role.name.toLowerCase() === 'admin' && moduleIds.length === 0 && subModuleIds.length === 0) {

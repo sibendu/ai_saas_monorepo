@@ -2,16 +2,27 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { menuSections } from '@/config/navigation'
 
 const authMocks = vi.hoisted(() => ({
-  isSessionUserAdmin: vi.fn(),
   requireAuthenticatedSession: vi.fn(),
 }))
 
-vi.mock('@/lib/admin-auth', () => ({
-  isSessionUserAdmin: authMocks.isSessionUserAdmin,
+const prismaMocks = vi.hoisted(() => ({
+  moduleFindMany: vi.fn(),
+  userGroupMemberFindMany: vi.fn(),
 }))
 
 vi.mock('@/lib/auth', () => ({
   requireAuthenticatedSession: authMocks.requireAuthenticatedSession,
+}))
+
+vi.mock('@/lib/prisma', () => ({
+  prisma: {
+    module: {
+      findMany: prismaMocks.moduleFindMany,
+    },
+    userGroupMember: {
+      findMany: prismaMocks.userGroupMemberFindMany,
+    },
+  },
 }))
 
 import { getAllowedMenuSections, getAuthenticatedShellData } from '@/lib/role-menu'
@@ -46,7 +57,6 @@ describe('role-menu', () => {
     delete process.env.NEXT_PUBLIC_BFF_URL
 
     authMocks.requireAuthenticatedSession.mockReset()
-    authMocks.isSessionUserAdmin.mockReset()
     authMocks.requireAuthenticatedSession.mockResolvedValue({
       user: {
         email: 'admin@example.com',
@@ -54,7 +64,11 @@ describe('role-menu', () => {
       },
       expires: '2026-12-31T00:00:00.000Z',
     })
-    authMocks.isSessionUserAdmin.mockResolvedValue(false)
+
+    prismaMocks.userGroupMemberFindMany.mockReset()
+    prismaMocks.userGroupMemberFindMany.mockResolvedValue([])
+    prismaMocks.moduleFindMany.mockReset()
+    prismaMocks.moduleFindMany.mockResolvedValue([])
 
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
   })
@@ -119,22 +133,93 @@ describe('role-menu', () => {
     ],
   ]
 
-  it.each(fallbackCases)('keeps configured menu fallback for %s', async (_caseName, factory) => {
+  it.each(fallbackCases)('uses database role menu fallback for %s', async (_caseName, factory) => {
     const fetchMock = vi.fn(factory)
     vi.stubGlobal('fetch', fetchMock)
+    prismaMocks.userGroupMemberFindMany.mockResolvedValue([
+      {
+        group: {
+          roles: [
+            {
+              role: {
+                id: 1,
+                name: 'Manager',
+                description: null,
+                modules: [
+                  {
+                    module: {
+                      id: 10,
+                      parentModuleId: null,
+                      label: 'Admin',
+                      displayOrder: 1,
+                      icon: 'settings',
+                      href: null,
+                      parentModule: null,
+                    },
+                    subModule: {
+                      id: 20,
+                      label: 'Roles',
+                      displayOrder: 1,
+                      icon: 'settings',
+                      href: '/admin/roles',
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    ])
 
-    await expect(getAllowedMenuSections('user@example.com')).resolves.toEqual(menuSections)
+    await expect(getAllowedMenuSections('USER@example.com')).resolves.toEqual([
+      {
+        id: '10',
+        label: 'Admin',
+        icon: 'settings',
+        items: [
+          {
+            label: 'Roles',
+            href: '/admin/roles',
+            icon: 'settings',
+          },
+        ],
+      },
+    ])
     expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(prismaMocks.userGroupMemberFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          customer: {
+            email: 'user@example.com',
+          },
+        },
+      })
+    )
   })
 
-  it('preserves Admin navigation injection when role-driven modules are empty', async () => {
-    authMocks.isSessionUserAdmin.mockResolvedValue(true)
+  it('uses Admin navigation from role-driven modules', async () => {
     const fetchMock = vi.fn(() =>
       Promise.resolve(
         createJsonResponse({
           success: true,
           roles: [],
-          modules: [],
+          modules: [
+            {
+              id: '5',
+              label: 'Admin',
+              icon: 'settings',
+              href: '/admin/roles',
+              subModules: [
+                {
+                  id: '50',
+                  label: 'Groups',
+                  icon: 'users',
+                  href: '/admin/groups',
+                },
+              ],
+            },
+          ],
         })
       )
     )
@@ -144,14 +229,147 @@ describe('role-menu', () => {
 
     expect(shellData.menuSections).toEqual([
       {
-        id: 'admin',
+        id: '5',
         label: 'Admin',
         icon: 'settings',
         items: [
           {
-            label: 'Admin',
-            href: '/admin',
+            label: 'Groups',
+            href: '/admin/groups',
+            icon: 'users',
+          },
+        ],
+      },
+    ])
+  })
+
+  it('orders role-driven modules and sub-modules by display order', async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(
+        createJsonResponse({
+          success: true,
+          roles: [],
+          modules: [
+            {
+              id: '5',
+              label: 'Admin',
+              displayOrder: 5,
+              icon: 'settings',
+              href: null,
+              subModules: [
+                {
+                  id: '53',
+                  label: 'Groups',
+                  displayOrder: 3,
+                  icon: 'users',
+                  href: '/admin/groups',
+                },
+                {
+                  id: '51',
+                  label: 'Roles',
+                  displayOrder: 1,
+                  icon: 'settings',
+                  href: '/admin/roles',
+                },
+              ],
+            },
+            {
+              id: '1',
+              label: 'Home',
+              displayOrder: 1,
+              icon: 'workspace',
+              href: '/dashboard',
+              subModules: [],
+            },
+          ],
+        })
+      )
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(getAllowedMenuSections('admin@example.com')).resolves.toEqual([
+      {
+        id: '1',
+        label: 'Home',
+        icon: 'workspace',
+        items: [
+          {
+            label: 'Home',
+            href: '/home',
+            icon: 'workspace',
+          },
+        ],
+      },
+      {
+        id: '5',
+        label: 'Admin',
+        icon: 'settings',
+        items: [
+          {
+            label: 'Roles',
+            href: '/admin/roles',
             icon: 'settings',
+          },
+          {
+            label: 'Groups',
+            href: '/admin/groups',
+            icon: 'users',
+          },
+        ],
+      },
+    ])
+  })
+
+  it('includes unmapped configured modules for admin database fallback menus', async () => {
+    const fetchMock = vi.fn(() => Promise.reject(new Error('BFF unavailable')))
+    vi.stubGlobal('fetch', fetchMock)
+    prismaMocks.userGroupMemberFindMany.mockResolvedValue([
+      {
+        group: {
+          roles: [
+            {
+              role: {
+                id: 1,
+                name: 'Admin',
+                description: null,
+                modules: [],
+              },
+            },
+          ],
+        },
+      },
+    ])
+    prismaMocks.moduleFindMany.mockResolvedValue([
+      {
+        id: 34,
+        parentModuleId: null,
+        label: 'Marketing',
+        displayOrder: 5,
+        icon: null,
+        href: '/marketing',
+        childModules: [
+          {
+            id: 35,
+            label: 'Campaign',
+            displayOrder: 1,
+            icon: null,
+            href: '/campaign',
+          },
+        ],
+        subModules: [],
+      },
+    ])
+
+    await expect(getAllowedMenuSections('admin@example.com')).resolves.toEqual([
+      {
+        id: '34',
+        label: 'Marketing',
+        icon: 'workspace',
+        items: [
+          {
+            label: 'Campaign',
+            href: '/campaign',
+            icon: 'chevron',
           },
         ],
       },

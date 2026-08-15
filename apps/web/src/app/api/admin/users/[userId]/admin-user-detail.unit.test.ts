@@ -54,6 +54,7 @@ const updatedUser = {
       },
     },
   ],
+  userGroupMemberships: [],
 }
 
 function authorizeAdmin() {
@@ -198,7 +199,7 @@ describe('admin user detail API', () => {
     expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
   })
 
-  it('updates editable fields only and returns the updated user with roles', async () => {
+  it('updates editable fields only and returns the updated user with groups', async () => {
     customerFindUniqueMock.mockResolvedValue({
       id: 2,
       email: 'old@example.com',
@@ -224,13 +225,7 @@ describe('admin user detail API', () => {
         email: 'jane@example.com',
         name: 'Jane User',
         company: null,
-        roles: [
-          {
-            id: '3',
-            name: 'Support',
-            description: null,
-          },
-        ],
+        groups: [],
       },
       message: 'User updated successfully',
     })

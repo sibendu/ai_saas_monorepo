@@ -1,16 +1,29 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { MenuLayout } from '@/config/navigation'
 import { AvailableThemeStyle, availableThemeStyles, ThemeName } from '@/config/theme'
 import { readApiResponse } from '@/lib/client-api'
 
 interface AdminStyleData {
   activeStyle: ThemeName
+  activeMenuLayout: MenuLayout
   styles: AvailableThemeStyle[]
+}
+
+function reloadOnStyleTab() {
+  window.history.replaceState(
+    null,
+    '',
+    `${window.location.pathname}${window.location.search}#style`
+  )
+  window.location.reload()
 }
 
 export default function StyleManagement() {
   const [activeStyle, setActiveStyle] = useState<ThemeName>('light')
+  const [activeMenuLayout, setActiveMenuLayout] = useState<MenuLayout>('left')
+  const [selectedMenuLayout, setSelectedMenuLayout] = useState<MenuLayout>('left')
   const [styles, setStyles] = useState<AvailableThemeStyle[]>(availableThemeStyles)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -37,6 +50,8 @@ export default function StyleManagement() {
         }
 
         setActiveStyle(payload.data.activeStyle)
+        setActiveMenuLayout(payload.data.activeMenuLayout)
+        setSelectedMenuLayout(payload.data.activeMenuLayout)
         setStyles(payload.data.styles)
       } catch (error) {
         if (!isCurrentRequest) {
@@ -78,12 +93,52 @@ export default function StyleManagement() {
       }
 
       setActiveStyle(payload.data.activeStyle)
+      setActiveMenuLayout(payload.data.activeMenuLayout)
+      setSelectedMenuLayout(payload.data.activeMenuLayout)
       setStyles(payload.data.styles)
       setStatusMessage(payload.message ?? 'Style applied successfully')
 
-      window.location.reload()
+      reloadOnStyleTab()
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Failed to apply style')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function handleApplyMenuLayout() {
+    setIsSaving(true)
+    setStatusMessage(null)
+    setErrorMessage(null)
+
+    try {
+      const response = await fetch('/api/admin/style', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ menuLayout: selectedMenuLayout }),
+      })
+      const payload = await readApiResponse<AdminStyleData>(
+        response,
+        'Failed to apply menu disposition'
+      )
+
+      if (!response.ok || !payload.success || !payload.data) {
+        throw new Error(payload.error ?? 'Failed to apply menu disposition')
+      }
+
+      setActiveStyle(payload.data.activeStyle)
+      setActiveMenuLayout(payload.data.activeMenuLayout)
+      setSelectedMenuLayout(payload.data.activeMenuLayout)
+      setStyles(payload.data.styles)
+      setStatusMessage(payload.message ?? 'Display settings applied successfully')
+
+      reloadOnStyleTab()
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Failed to apply menu disposition'
+      )
     } finally {
       setIsSaving(false)
     }
@@ -120,6 +175,43 @@ export default function StyleManagement() {
             {errorMessage}
           </p>
         )}
+      </div>
+
+      <div className="bg-white rounded-lg shadow p-4 sm:p-5">
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(10rem,14rem)_auto] sm:items-end">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900">Menu disposition</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Choose whether navigation appears on the left or across the top.
+            </p>
+          </div>
+          <div>
+            <label
+              className="block text-xs font-semibold uppercase tracking-wide text-gray-500"
+              htmlFor="menu-layout"
+            >
+              Layout
+            </label>
+            <select
+              id="menu-layout"
+              value={selectedMenuLayout}
+              onChange={(event) => setSelectedMenuLayout(event.target.value as MenuLayout)}
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+              disabled={isSaving}
+            >
+              <option value="left">Left</option>
+              <option value="top">Top</option>
+            </select>
+          </div>
+          <button
+            type="button"
+            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
+            onClick={() => void handleApplyMenuLayout()}
+            disabled={isSaving || selectedMenuLayout === activeMenuLayout}
+          >
+            {selectedMenuLayout === activeMenuLayout ? 'Applied' : 'Apply'}
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

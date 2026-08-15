@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { AllowedModule, Role, UserRolesResponse } from '@saas/shared-types';
 
-interface UserRoleWithAccess {
+interface GroupRoleWithAccess {
   role: {
     id: number;
     name: string;
@@ -9,13 +9,24 @@ interface UserRoleWithAccess {
     modules: Array<{
       module: {
         id: number;
+        parentModuleId: number | null;
         label: string;
+        displayOrder: number;
         icon: string | null;
         href: string | null;
+        parentModule: {
+          id: number;
+          parentModuleId: number | null;
+          label: string;
+          displayOrder: number;
+          icon: string | null;
+          href: string | null;
+        } | null;
       };
       subModule: {
         id: number;
         label: string;
+        displayOrder: number;
         icon: string | null;
         href: string;
       } | null;
@@ -23,8 +34,59 @@ interface UserRoleWithAccess {
   };
 }
 
+interface UserGroupMembershipWithAccess {
+  group: {
+    roles: GroupRoleWithAccess[];
+  };
+}
+
+interface ConfiguredModule {
+  id: number;
+  parentModuleId: number | null;
+  label: string;
+  displayOrder: number;
+  icon: string | null;
+  href: string | null;
+  childModules: Array<{
+    id: number;
+    label: string;
+    displayOrder: number;
+    icon: string | null;
+    href: string | null;
+  }>;
+  subModules: Array<{
+    id: number;
+    label: string;
+    displayOrder: number;
+    icon: string | null;
+    href: string;
+  }>;
+}
+
 interface RolesPrismaClient {
-  userRole: {
+  module: {
+    findMany(args: {
+      orderBy: Array<{
+        displayOrder?: 'asc' | 'desc';
+        label?: 'asc' | 'desc';
+      }>;
+      include: {
+        childModules: {
+          orderBy: Array<{
+            displayOrder?: 'asc' | 'desc';
+            label?: 'asc' | 'desc';
+          }>;
+        };
+        subModules: {
+          orderBy: Array<{
+            displayOrder?: 'asc' | 'desc';
+            label?: 'asc' | 'desc';
+          }>;
+        };
+      };
+    }): Promise<unknown[]>;
+  };
+  userGroupMember: {
     findMany(args: {
       where: {
         customer: {
@@ -32,12 +94,28 @@ interface RolesPrismaClient {
         };
       };
       include: {
-        role: {
+        group: {
           include: {
-            modules: {
+            roles: {
               include: {
-                module: true;
-                subModule: true;
+                role: {
+                  include: {
+                    modules: {
+                      orderBy: Array<{
+                        moduleId?: 'asc' | 'desc';
+                        subModuleId?: 'asc' | 'desc';
+                      }>;
+                      include: {
+                        module: {
+                          include: {
+                            parentModule: true;
+                          };
+                        };
+                        subModule: true;
+                      };
+                    };
+                  };
+                };
               };
             };
           };
@@ -52,7 +130,7 @@ async function getRolesPrismaClient(): Promise<RolesPrismaClient> {
   return getPrismaClient();
 }
 
-function toSharedRole(role: UserRoleWithAccess['role']): Role {
+function toSharedRole(role: GroupRoleWithAccess['role']): Role {
   return {
     id: role.id.toString(),
     name: role.name,
@@ -60,27 +138,105 @@ function toSharedRole(role: UserRoleWithAccess['role']): Role {
   };
 }
 
-export function resolveAllowedModules(userRoles: UserRoleWithAccess[]): AllowedModule[] {
+function compareByDisplayOrder(
+  first: { displayOrder?: number; label: string },
+  second: { displayOrder?: number; label: string }
+): number {
+  const firstOrder = first.displayOrder ?? Number.MAX_SAFE_INTEGER;
+  const secondOrder = second.displayOrder ?? Number.MAX_SAFE_INTEGER;
+
+  if (firstOrder !== secondOrder) {
+    return firstOrder - secondOrder;
+  }
+
+  return first.label.localeCompare(second.label);
+}
+
+function sortAllowedModules(modules: AllowedModule[]): AllowedModule[] {
+  const sortedModules = [...modules].sort(compareByDisplayOrder);
+
+  for (const module of sortedModules) {
+    module.subModules.sort(compareByDisplayOrder);
+  }
+
+  return sortedModules;
+}
+
+export function resolveAllConfiguredModules(configuredModules: ConfiguredModule[]): AllowedModule[] {
+  return sortAllowedModules(
+    configuredModules
+      .filter((module) => module.parentModuleId === null)
+      .map((module) => {
+        const childModules =
+          module.childModules.length > 0
+            ? module.childModules
+                .filter((childModule) => childModule.href)
+                .map((childModule) => ({
+                  id: childModule.id.toString(),
+                  label: childModule.label,
+                  displayOrder: childModule.displayOrder,
+                  icon: childModule.icon,
+                  href: childModule.href ?? '',
+                }))
+            : module.subModules.map((subModule) => ({
+                id: subModule.id.toString(),
+                label: subModule.label,
+                displayOrder: subModule.displayOrder,
+                icon: subModule.icon,
+                href: subModule.href,
+              }));
+
+        return {
+          id: module.id.toString(),
+          label: module.label,
+          displayOrder: module.displayOrder,
+          icon: module.icon,
+          href: module.href,
+          subModules: childModules,
+        };
+      })
+  );
+}
+
+export function resolveAllowedModules(userRoles: GroupRoleWithAccess[]): AllowedModule[] {
   const modulesById = new Map<string, AllowedModule>();
   const subModuleIdsByModuleId = new Map<string, Set<string>>();
 
   for (const userRole of userRoles) {
     for (const roleModule of userRole.role.modules) {
-      const moduleId = roleModule.module.id.toString();
+      const parentModule = roleModule.module.parentModule;
+      const isChildModule = roleModule.module.parentModuleId !== null && parentModule;
+      const menuModule = isChildModule ? parentModule : roleModule.module;
+      const moduleId = menuModule.id.toString();
       const existingModule = modulesById.get(moduleId);
 
       if (!existingModule) {
         modulesById.set(moduleId, {
           id: moduleId,
-          label: roleModule.module.label,
-          icon: roleModule.module.icon,
-          href: roleModule.module.href,
+          label: menuModule.label,
+          displayOrder: menuModule.displayOrder,
+          icon: menuModule.icon,
+          href: menuModule.href,
           subModules: [],
         });
         subModuleIdsByModuleId.set(moduleId, new Set<string>());
       }
 
-      if (roleModule.subModule) {
+      if (isChildModule) {
+        const childModuleId = roleModule.module.id.toString();
+        const seenSubModules = subModuleIdsByModuleId.get(moduleId);
+
+        if (!seenSubModules?.has(childModuleId) && roleModule.module.href) {
+          modulesById.get(moduleId)?.subModules.push({
+            id: childModuleId,
+            label: roleModule.module.label,
+            displayOrder: roleModule.module.displayOrder,
+            icon: roleModule.module.icon,
+            href: roleModule.module.href,
+          });
+          seenSubModules?.add(childModuleId);
+        }
+      } else if (roleModule.subModule) {
         const subModuleId = roleModule.subModule.id.toString();
         const seenSubModules = subModuleIdsByModuleId.get(moduleId);
 
@@ -88,6 +244,7 @@ export function resolveAllowedModules(userRoles: UserRoleWithAccess[]): AllowedM
           modulesById.get(moduleId)?.subModules.push({
             id: subModuleId,
             label: roleModule.subModule.label,
+            displayOrder: roleModule.subModule.displayOrder,
             icon: roleModule.subModule.icon,
             href: roleModule.subModule.href,
           });
@@ -97,9 +254,7 @@ export function resolveAllowedModules(userRoles: UserRoleWithAccess[]): AllowedM
     }
   }
 
-  return Array.from(modulesById.values()).sort((first, second) =>
-    first.label.localeCompare(second.label)
-  );
+  return sortAllowedModules(Array.from(modulesById.values()));
 }
 
 export function createRolesRouter(prismaClient?: RolesPrismaClient) {
@@ -119,30 +274,70 @@ export function createRolesRouter(prismaClient?: RolesPrismaClient) {
       }
 
       const client = prismaClient ?? (await getRolesPrismaClient());
-      const userRoles = (await client.userRole.findMany({
+      const userGroupMemberships = (await client.userGroupMember.findMany({
         where: {
           customer: {
             email,
           },
         },
         include: {
-          role: {
+          group: {
             include: {
-              modules: {
+              roles: {
                 include: {
-                  module: true,
-                  subModule: true,
+                  role: {
+                    include: {
+                      modules: {
+                        orderBy: [{ moduleId: 'asc' }, { subModuleId: 'asc' }],
+                        include: {
+                          module: {
+                            include: {
+                              parentModule: true,
+                            },
+                          },
+                          subModule: true,
+                        },
+                      },
+                    },
+                  },
                 },
               },
             },
           },
         },
-      })) as UserRoleWithAccess[];
+      })) as UserGroupMembershipWithAccess[];
+      const uniqueRoleIds = new Set<number>();
+      const userRoles = userGroupMemberships.flatMap((membership) => membership.group.roles);
+      const uniqueUserRoles = userRoles.filter((groupRole) => {
+        if (uniqueRoleIds.has(groupRole.role.id)) {
+          return false;
+        }
+
+        uniqueRoleIds.add(groupRole.role.id);
+        return true;
+      });
+      const roles = uniqueUserRoles.map((userRole) => toSharedRole(userRole.role));
+      const hasAdminRole = roles.some((role) => role.name.toLowerCase() === 'admin');
+      const modules = hasAdminRole
+        ? resolveAllConfiguredModules(
+            (await client.module.findMany({
+              orderBy: [{ displayOrder: 'asc' }, { label: 'asc' }],
+              include: {
+                childModules: {
+                  orderBy: [{ displayOrder: 'asc' }, { label: 'asc' }],
+                },
+                subModules: {
+                  orderBy: [{ displayOrder: 'asc' }, { label: 'asc' }],
+                },
+              },
+            })) as ConfiguredModule[]
+          )
+        : resolveAllowedModules(uniqueUserRoles);
 
       res.json({
         success: true,
-        roles: userRoles.map((userRole) => toSharedRole(userRole.role)),
-        modules: resolveAllowedModules(userRoles),
+        roles,
+        modules,
       } satisfies UserRolesResponse);
     } catch (error) {
       console.error('Error fetching user roles:', error);

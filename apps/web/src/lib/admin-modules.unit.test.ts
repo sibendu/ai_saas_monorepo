@@ -13,17 +13,40 @@ describe('admin module helpers', () => {
   it('selects only public module summary fields with sorted sub-modules', () => {
     expect(moduleWithSubModulesSelect).toEqual({
       id: true,
+      parentModuleId: true,
       label: true,
+      displayOrder: true,
       icon: true,
       href: true,
-      subModules: {
-        orderBy: {
-          label: 'asc',
+      parentModule: {
+        select: {
+          id: true,
+          label: true,
         },
+      },
+      _count: {
+        select: {
+          childModules: true,
+        },
+      },
+      childModules: {
+        orderBy: [{ displayOrder: 'asc' }, { label: 'asc' }],
+        select: {
+          id: true,
+          parentModuleId: true,
+          label: true,
+          displayOrder: true,
+          icon: true,
+          href: true,
+        },
+      },
+      subModules: {
+        orderBy: [{ displayOrder: 'asc' }, { label: 'asc' }],
         select: {
           id: true,
           moduleId: true,
           label: true,
+          displayOrder: true,
           icon: true,
           href: true,
         },
@@ -34,16 +57,44 @@ describe('admin module helpers', () => {
   it('maps module summaries with sorted sub-modules and without leaking database-only fields', () => {
     const moduleRecord = {
       id: 2,
+      parentModuleId: 1,
+      parentModule: {
+        id: 1,
+        label: 'Operations',
+      },
       label: 'CRM',
+      displayOrder: 2,
       icon: 'Users',
       href: null,
+      _count: {
+        childModules: 2,
+      },
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       roleLinks: [{ id: 99 }],
+      childModules: [
+        {
+          id: 22,
+          parentModuleId: 2,
+          label: 'Accounts',
+          displayOrder: 2,
+          icon: 'workspace',
+          href: '/crm/accounts',
+        },
+        {
+          id: 21,
+          parentModuleId: 2,
+          label: 'Deals',
+          displayOrder: 1,
+          icon: null,
+          href: '/crm/deals',
+        },
+      ],
       subModules: [
         {
           id: 12,
           moduleId: 2,
           label: 'Leads',
+          displayOrder: 2,
           icon: 'Target',
           href: '/crm/leads',
           createdAt: new Date('2026-01-03T00:00:00.000Z'),
@@ -52,6 +103,7 @@ describe('admin module helpers', () => {
           id: 11,
           moduleId: 2,
           label: 'Contacts',
+          displayOrder: 1,
           icon: null,
           href: '/crm/contacts',
           updatedAt: new Date('2026-01-02T00:00:00.000Z'),
@@ -61,14 +113,37 @@ describe('admin module helpers', () => {
 
     expect(mapAdminModule(moduleRecord)).toEqual({
       id: '2',
+      parentModuleId: '1',
+      parentModuleLabel: 'Operations',
       label: 'CRM',
+      displayOrder: 2,
       icon: 'Users',
       href: null,
+      childModuleCount: 2,
+      childModules: [
+        {
+          id: '21',
+          parentModuleId: '2',
+          label: 'Deals',
+          displayOrder: 1,
+          icon: null,
+          href: '/crm/deals',
+        },
+        {
+          id: '22',
+          parentModuleId: '2',
+          label: 'Accounts',
+          displayOrder: 2,
+          icon: 'workspace',
+          href: '/crm/accounts',
+        },
+      ],
       subModules: [
         {
           id: '11',
           moduleId: '2',
           label: 'Contacts',
+          displayOrder: 1,
           icon: null,
           href: '/crm/contacts',
         },
@@ -76,6 +151,7 @@ describe('admin module helpers', () => {
           id: '12',
           moduleId: '2',
           label: 'Leads',
+          displayOrder: 2,
           icon: 'Target',
           href: '/crm/leads',
         },
@@ -87,20 +163,34 @@ describe('admin module helpers', () => {
     expect(mapAdminModule(moduleRecord).subModules[1]).not.toHaveProperty('createdAt')
   })
 
-  it('sorts module lists by label without mutating the query result', () => {
+  it('sorts module lists by display order without mutating the query result', () => {
     const modules = [
       {
         id: 2,
+        parentModuleId: null,
+        parentModule: null,
         label: 'CRM',
+        displayOrder: 2,
         icon: null,
         href: '/crm',
+        _count: {
+          childModules: 0,
+        },
+        childModules: [],
         subModules: [],
       },
       {
         id: 1,
+        parentModuleId: null,
+        parentModule: null,
         label: 'Billing',
+        displayOrder: 1,
         icon: null,
         href: '/billing',
+        _count: {
+          childModules: 0,
+        },
+        childModules: [],
         subModules: [],
       },
     ]

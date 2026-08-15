@@ -139,7 +139,7 @@ describe('admin role detail API', () => {
     expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
   })
 
-  it('rejects deleting roles with assigned users or module mappings', async () => {
+  it('rejects deleting roles with assigned groups or module mappings', async () => {
     roleFindUniqueMock.mockResolvedValue({
       id: 1,
       name: 'Support',
@@ -147,7 +147,7 @@ describe('admin role detail API', () => {
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       updatedAt: new Date('2026-01-02T00:00:00.000Z'),
       _count: {
-        users: 1,
+          groups: 1,
         modules: 3,
       },
     })
@@ -158,7 +158,7 @@ describe('admin role detail API', () => {
 
     await expect(response.json()).resolves.toEqual({
       success: false,
-      error: 'Role cannot be deleted while it has assigned users or module access',
+      error: 'Role cannot be deleted while it has assigned groups or module access',
     })
     expect(response.status).toBe(409)
     expect(roleDeleteManyMock).not.toHaveBeenCalled()
@@ -173,7 +173,7 @@ describe('admin role detail API', () => {
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       updatedAt: new Date('2026-01-02T00:00:00.000Z'),
       _count: {
-        users: 0,
+          groups: 0,
         modules: 0,
       },
     })
@@ -199,7 +199,7 @@ describe('admin role detail API', () => {
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       updatedAt: new Date('2026-01-02T00:00:00.000Z'),
       _count: {
-        users: 0,
+          groups: 0,
         modules: 0,
       },
     })
@@ -211,7 +211,7 @@ describe('admin role detail API', () => {
 
     await expect(response.json()).resolves.toEqual({
       success: false,
-      error: 'Role cannot be deleted while it has assigned users or module access',
+      error: 'Role cannot be deleted while it has assigned groups or module access',
     })
     expect(response.status).toBe(409)
     expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
@@ -231,7 +231,7 @@ describe('admin role detail API', () => {
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       updatedAt: new Date('2026-01-02T00:00:00.000Z'),
       _count: {
-        users: 0,
+          groups: 0,
         modules: 0,
       },
     })
@@ -267,7 +267,7 @@ describe('admin role detail API', () => {
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       updatedAt: new Date('2026-01-02T00:00:00.000Z'),
       _count: {
-        users: 0,
+          groups: 0,
         modules: 0,
       },
     })

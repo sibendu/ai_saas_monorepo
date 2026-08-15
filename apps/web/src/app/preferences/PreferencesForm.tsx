@@ -1,46 +1,162 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { ChangeEvent, FormEvent, useState } from 'react'
 import { useSession } from 'next-auth/react'
 
 import AppShell from '@/components/AppShell'
 import { MenuLayout, MenuSectionConfig } from '@/config/navigation'
+import {
+  ProfileAddressInput,
+  ProfileAddressType,
+  ProfileContactInput,
+  ProfileContactType,
+} from '@/lib/profile'
+
+interface PreferencesUser {
+  name?: string | null
+  email?: string | null
+  firstName?: string | null
+  middleName?: string | null
+  lastName?: string | null
+  dob?: string | null
+  company?: string | null
+  addresses?: ProfileAddressInput[]
+  contacts?: ProfileContactInput[]
+}
 
 interface PreferencesFormProps {
-  user: {
-    name?: string | null
-    email?: string | null
-    company?: string | null
-  }
+  user: PreferencesUser
   menuSections: MenuSectionConfig[]
   menuLayout: MenuLayout
 }
 
+interface ProfileFormState {
+  email: string
+  firstName: string
+  middleName: string
+  lastName: string
+  dob: string
+  company: string
+  addresses: ProfileAddressInput[]
+  contacts: ProfileContactInput[]
+}
+
+const countryCodeOptions = ['+91', '+1', '+44', '+61', '+65', '+971']
+
+function emptyAddress(type: ProfileAddressType = 'PERMANENT'): ProfileAddressInput {
+  return {
+    type,
+    addressLine1: '',
+    addressLine2: '',
+    addressLine3: '',
+    city: '',
+    district: '',
+    state: '',
+    country: '',
+    pin: '',
+  }
+}
+
+function emptyContact(type: ProfileContactType = 'MOBILE'): ProfileContactInput {
+  return {
+    type,
+    countryCode: '+91',
+    contact: '',
+  }
+}
+
 export default function PreferencesForm({ user, menuSections, menuLayout }: PreferencesFormProps) {
-  const router = useRouter()
   const { update } = useSession()
-  const [formData, setFormData] = useState({
-    name: user.name ?? '',
+  const [formData, setFormData] = useState<ProfileFormState>({
     email: user.email ?? '',
+    firstName: user.firstName ?? '',
+    middleName: user.middleName ?? '',
+    lastName: user.lastName ?? '',
+    dob: user.dob ?? '',
     company: user.company ?? '',
+    addresses: user.addresses?.length ? user.addresses : [],
+    contacts: user.contacts?.length ? user.contacts : [],
   })
   const [error, setError] = useState('')
+  const [statusMessage, setStatusMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  function updateField(event: ChangeEvent<HTMLInputElement>) {
     setFormData((current) => ({
       ...current,
-      [e.target.id]: e.target.value,
+      [event.target.id]: event.target.value,
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
+  function updateAddress(
+    index: number,
+    field: keyof ProfileAddressInput,
+    value: ProfileAddressInput[keyof ProfileAddressInput]
+  ) {
+    setFormData((current) => ({
+      ...current,
+      addresses: current.addresses.map((address, addressIndex) =>
+        addressIndex === index ? { ...address, [field]: value } : address
+      ),
+    }))
+  }
 
-    if (!formData.name) {
-      setError('Name is required')
+  function updateContact(
+    index: number,
+    field: keyof ProfileContactInput,
+    value: ProfileContactInput[keyof ProfileContactInput]
+  ) {
+    setFormData((current) => ({
+      ...current,
+      contacts: current.contacts.map((contact, contactIndex) =>
+        contactIndex === index ? { ...contact, [field]: value } : contact
+      ),
+    }))
+  }
+
+  function addAddress() {
+    setFormData((current) => ({
+      ...current,
+      addresses: [
+        ...current.addresses,
+        emptyAddress(current.addresses.length === 0 ? 'PERMANENT' : 'COMMUNICATION'),
+      ].slice(0, 2),
+    }))
+  }
+
+  function addContact() {
+    setFormData((current) => ({
+      ...current,
+      contacts: [...current.contacts, emptyContact()].slice(0, 2),
+    }))
+  }
+
+  function removeAddress(index: number) {
+    setFormData((current) => ({
+      ...current,
+      addresses: current.addresses.filter((_, addressIndex) => addressIndex !== index),
+    }))
+  }
+
+  function removeContact(index: number) {
+    setFormData((current) => ({
+      ...current,
+      contacts: current.contacts.filter((_, contactIndex) => contactIndex !== index),
+    }))
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError('')
+    setStatusMessage('')
+
+    if (!formData.firstName.trim()) {
+      setError('First name is required')
+      return
+    }
+
+    if (!formData.lastName.trim()) {
+      setError('Last name is required')
       return
     }
 
@@ -53,21 +169,26 @@ export default function PreferencesForm({ user, menuSections, menuLayout }: Pref
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: formData.name,
+          firstName: formData.firstName,
+          middleName: formData.middleName,
+          lastName: formData.lastName,
+          dob: formData.dob || null,
           company: formData.company,
+          addresses: formData.addresses,
+          contacts: formData.contacts,
         }),
       })
 
-      const data = (await response.json()) as { error?: string }
+      const data = (await response.json()) as { error?: string; message?: string }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to update preferences')
+        throw new Error(data.error || 'Failed to update profile')
       }
 
       await update()
-      router.push('/dashboard')
+      setStatusMessage(data.message ?? 'Profile updated successfully')
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'An error occurred while updating preferences.')
+      setError(err instanceof Error ? err.message : 'An error occurred while updating profile.')
     } finally {
       setIsLoading(false)
     }
@@ -79,87 +200,348 @@ export default function PreferencesForm({ user, menuSections, menuLayout }: Pref
       menuSections={menuSections}
       menuLayout={menuLayout}
       pageTitle="Preferences"
-      pageSubtitle="Configure your account preferences"
+      pageSubtitle="Profile"
     >
-      <div className="max-w-md w-full mx-auto space-y-8">
-        <div className="bg-white rounded-2xl shadow-2xl p-10 transform transition-all">
-          <div className="text-center mb-10">
-            <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">
-              Complete Your Profile
-            </h1>
-            <p className="text-gray-500 mt-3 text-lg">Set up your preferences</p>
-          </div>
+      <section className="space-y-5">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-5">
+          <h2 className="text-lg font-semibold text-gray-900">Profile</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Maintain account details, addresses, and contact information.
+          </p>
 
-          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-            <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                Email Address
-              </label>
-              <input
+          {statusMessage && (
+            <p className="mt-4 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">
+              {statusMessage}
+            </p>
+          )}
+          {error && (
+            <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </p>
+          )}
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+          <div className="bg-white rounded-lg shadow p-4 sm:p-5">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+              Account details
+            </h3>
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+              <TextInput
                 id="email"
-                type="email"
+                label="Email address"
                 value={formData.email}
                 disabled
-                className="w-full px-5 py-3 bg-gray-100 border border-gray-300 rounded-xl text-gray-500 cursor-not-allowed"
+                onChange={updateField}
               />
-              <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
-            </div>
-
-            <div>
-              <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
-                Full Name *
-              </label>
-              <input
-                id="name"
-                type="text"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-gray-900 placeholder-gray-400"
-                placeholder="Your full name"
+              <TextInput
+                id="firstName"
+                label="First name"
+                maxLength={40}
                 required
+                value={formData.firstName}
+                onChange={updateField}
               />
-            </div>
-
-            <div>
-              <label htmlFor="company" className="block text-sm font-semibold text-gray-700 mb-2">
-                Company / Organization
-              </label>
-              <input
+              <TextInput
+                id="middleName"
+                label="Middle name"
+                maxLength={40}
+                value={formData.middleName}
+                onChange={updateField}
+              />
+              <TextInput
+                id="lastName"
+                label="Last name"
+                maxLength={40}
+                required
+                value={formData.lastName}
+                onChange={updateField}
+              />
+              <TextInput
+                id="dob"
+                label="DOB"
+                type="date"
+                value={formData.dob}
+                onChange={updateField}
+              />
+              <TextInput
                 id="company"
-                type="text"
+                label="Company / Organization"
                 value={formData.company}
-                onChange={handleChange}
-                className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-gray-900 placeholder-gray-400"
-                placeholder="Your company name (optional)"
+                onChange={updateField}
               />
             </div>
+          </div>
 
-            {error && (
-              <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg text-sm font-medium">
-                {error}
+          <div className="bg-white rounded-lg shadow p-4 sm:p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+                  Addresses
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">Add up to 2 addresses.</p>
               </div>
-            )}
+              <button
+                type="button"
+                onClick={addAddress}
+                disabled={formData.addresses.length >= 2}
+                className="rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-400"
+              >
+                Add address
+              </button>
+            </div>
 
+            <div className="mt-4 space-y-4">
+              {formData.addresses.length === 0 ? (
+                <p className="text-sm text-gray-500">No addresses have been added.</p>
+              ) : (
+                formData.addresses.map((address, index) => (
+                  <div key={index} className="rounded-md border border-gray-200 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <h4 className="text-sm font-semibold text-gray-900">Address {index + 1}</h4>
+                      <button
+                        type="button"
+                        onClick={() => removeAddress(index)}
+                        className="rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                      <SelectInput
+                        label="Type"
+                        value={address.type}
+                        options={[
+                          { label: 'Permanent', value: 'PERMANENT' },
+                          { label: 'Communication', value: 'COMMUNICATION' },
+                        ]}
+                        onChange={(value) =>
+                          updateAddress(index, 'type', value as ProfileAddressType)
+                        }
+                      />
+                      <TextInput
+                        id={`addressLine1-${index}`}
+                        label="Address line 1"
+                        maxLength={60}
+                        required
+                        value={address.addressLine1}
+                        onChange={(event) =>
+                          updateAddress(index, 'addressLine1', event.target.value)
+                        }
+                      />
+                      <TextInput
+                        id={`addressLine2-${index}`}
+                        label="Address line 2"
+                        maxLength={60}
+                        required
+                        value={address.addressLine2}
+                        onChange={(event) =>
+                          updateAddress(index, 'addressLine2', event.target.value)
+                        }
+                      />
+                      <TextInput
+                        id={`addressLine3-${index}`}
+                        label="Address line 3"
+                        maxLength={60}
+                        value={address.addressLine3 ?? ''}
+                        onChange={(event) =>
+                          updateAddress(index, 'addressLine3', event.target.value)
+                        }
+                      />
+                      <TextInput
+                        id={`city-${index}`}
+                        label="City"
+                        value={address.city}
+                        onChange={(event) => updateAddress(index, 'city', event.target.value)}
+                      />
+                      <TextInput
+                        id={`district-${index}`}
+                        label="District"
+                        value={address.district}
+                        onChange={(event) => updateAddress(index, 'district', event.target.value)}
+                      />
+                      <TextInput
+                        id={`state-${index}`}
+                        label="State"
+                        value={address.state}
+                        onChange={(event) => updateAddress(index, 'state', event.target.value)}
+                      />
+                      <TextInput
+                        id={`country-${index}`}
+                        label="Country"
+                        value={address.country}
+                        onChange={(event) => updateAddress(index, 'country', event.target.value)}
+                      />
+                      <TextInput
+                        id={`pin-${index}`}
+                        label="PIN"
+                        value={address.pin}
+                        onChange={(event) => updateAddress(index, 'pin', event.target.value)}
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-4 sm:p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+                  Contacts
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">Add up to 2 contacts.</p>
+              </div>
+              <button
+                type="button"
+                onClick={addContact}
+                disabled={formData.contacts.length >= 2}
+                className="rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-400"
+              >
+                Add contact
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              {formData.contacts.length === 0 ? (
+                <p className="text-sm text-gray-500">No contacts have been added.</p>
+              ) : (
+                formData.contacts.map((contact, index) => (
+                  <div key={index} className="rounded-md border border-gray-200 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <h4 className="text-sm font-semibold text-gray-900">Contact {index + 1}</h4>
+                      <button
+                        type="button"
+                        onClick={() => removeContact(index)}
+                        className="rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,10rem)_minmax(0,1fr)]">
+                      <SelectInput
+                        label="Type"
+                        value={contact.type}
+                        options={[
+                          { label: 'Mobile', value: 'MOBILE' },
+                          { label: 'Other', value: 'OTHER' },
+                        ]}
+                        onChange={(value) =>
+                          updateContact(index, 'type', value as ProfileContactType)
+                        }
+                      />
+                      <SelectInput
+                        label="Country code"
+                        value={contact.countryCode}
+                        options={countryCodeOptions.map((code) => ({ label: code, value: code }))}
+                        onChange={(value) => updateContact(index, 'countryCode', value)}
+                      />
+                      <TextInput
+                        id={`contact-${index}`}
+                        label="Contact"
+                        inputMode={contact.type === 'MOBILE' ? 'numeric' : 'text'}
+                        maxLength={contact.type === 'MOBILE' ? 10 : 40}
+                        required
+                        value={contact.contact}
+                        onChange={(event) => updateContact(index, 'contact', event.target.value)}
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-end">
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all font-bold text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
             >
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Saving...
-                </span>
-              ) : (
-                'Continue'
-              )}
+              {isLoading ? 'Saving...' : 'Save profile'}
             </button>
-          </form>
-        </div>
-      </div>
+          </div>
+        </form>
+      </section>
     </AppShell>
+  )
+}
+
+function TextInput({
+  disabled = false,
+  id,
+  inputMode,
+  label,
+  maxLength,
+  onChange,
+  required = false,
+  type = 'text',
+  value,
+}: {
+  disabled?: boolean
+  id: string
+  inputMode?: 'numeric' | 'text'
+  label: string
+  maxLength?: number
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void
+  required?: boolean
+  type?: string
+  value: string
+}) {
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="block text-xs font-semibold uppercase tracking-wide text-gray-500"
+      >
+        {label}
+        {required ? <span className="text-red-600"> *</span> : null}
+      </label>
+      <input
+        id={id}
+        type={type}
+        inputMode={inputMode}
+        value={value}
+        maxLength={maxLength}
+        disabled={disabled}
+        onChange={onChange}
+        className={`mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm ${
+          disabled ? 'bg-gray-100 text-gray-500' : 'text-gray-900'
+        }`}
+        required={required}
+      />
+    </div>
+  )
+}
+
+function SelectInput({
+  label,
+  onChange,
+  options,
+  value,
+}: {
+  label: string
+  onChange: (value: string) => void
+  options: { label: string; value: string }[]
+  value: string
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500">
+        {label}
+      </label>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
   )
 }

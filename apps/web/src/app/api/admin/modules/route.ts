@@ -24,6 +24,42 @@ function normalizeModuleLabel(label: unknown): string {
   return typeof label === 'string' ? label.trim() : ''
 }
 
+function parseOptionalModuleId(moduleId: unknown): number | null {
+  if (moduleId === null || moduleId === undefined || moduleId === '') {
+    return null
+  }
+
+  if (typeof moduleId !== 'string' || !/^[1-9]\d*$/.test(moduleId)) {
+    return Number.NaN
+  }
+
+  const parsedModuleId = Number(moduleId)
+
+  return Number.isSafeInteger(parsedModuleId) ? parsedModuleId : Number.NaN
+}
+
+function parseOptionalDisplayOrder(displayOrder: unknown): number | null {
+  if (displayOrder === null || displayOrder === undefined || displayOrder === '') {
+    return null
+  }
+
+  if (typeof displayOrder !== 'number' || !Number.isSafeInteger(displayOrder) || displayOrder < 1) {
+    return Number.NaN
+  }
+
+  return displayOrder
+}
+
+async function getNextDisplayOrder(parentModuleId: number | null): Promise<number> {
+  const lastSibling = await prisma.module.findFirst({
+    where: { parentModuleId },
+    orderBy: [{ displayOrder: 'desc' }, { label: 'asc' }],
+    select: { displayOrder: true },
+  })
+
+  return (lastSibling?.displayOrder ?? 0) + 1
+}
+
 async function readModuleMutationRequest(
   request: Request
 ): Promise<Partial<AdminModuleMutationRequest> | null> {
@@ -55,7 +91,7 @@ export async function GET(): Promise<NextResponse> {
 
   try {
     const modules = await prisma.module.findMany({
-      orderBy: { label: 'asc' },
+      orderBy: [{ displayOrder: 'asc' }, { label: 'asc' }],
       select: moduleWithSubModulesSelect,
     })
 
@@ -103,6 +139,38 @@ export async function POST(request: Request): Promise<NextResponse> {
       )
     }
 
+    const parentModuleId = parseOptionalModuleId(body.parentModuleId)
+
+    if (Number.isNaN(parentModuleId)) {
+      return NextResponse.json<ApiResponse<never>>(
+        { success: false, error: 'Parent module id must be a positive integer' },
+        { status: 400 }
+      )
+    }
+
+    if (parentModuleId) {
+      const parentModule = await prisma.module.findUnique({
+        where: { id: parentModuleId },
+        select: { id: true },
+      })
+
+      if (!parentModule) {
+        return NextResponse.json<ApiResponse<never>>(
+          { success: false, error: 'Parent module not found' },
+          { status: 400 }
+        )
+      }
+    }
+
+    const displayOrder = parseOptionalDisplayOrder(body.displayOrder)
+
+    if (Number.isNaN(displayOrder)) {
+      return NextResponse.json<ApiResponse<never>>(
+        { success: false, error: 'Order must be a positive integer' },
+        { status: 400 }
+      )
+    }
+
     const existingModule = await prisma.module.findFirst({
       where: {
         label: {
@@ -122,6 +190,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     const module = await prisma.module.create({
       data: {
         label,
+        parentModuleId,
+        displayOrder: displayOrder ?? (await getNextDisplayOrder(parentModuleId)),
         icon: normalizeOptionalString(body.icon),
         href: normalizeOptionalString(body.href),
       },

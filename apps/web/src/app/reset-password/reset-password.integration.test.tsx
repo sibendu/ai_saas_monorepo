@@ -64,6 +64,6 @@ describe('ResetPasswordPage activation token flow', () => {
       password: 'new-password',
       redirect: false,
     })
-    expect(pushMock).toHaveBeenCalledWith('/dashboard')
+    expect(pushMock).toHaveBeenCalledWith('/home')
   })
 })

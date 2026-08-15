@@ -91,9 +91,14 @@ describe('admin modules API', () => {
     moduleFindManyMock.mockResolvedValue([
       {
         id: 2,
+        parentModuleId: null,
+        parentModule: null,
         label: 'CRM',
         icon: 'Users',
         href: null,
+        _count: {
+          childModules: 2,
+        },
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         roleLinks: [{ id: 99 }],
         subModules: [
@@ -117,9 +122,14 @@ describe('admin modules API', () => {
       },
       {
         id: 1,
+        parentModuleId: null,
+        parentModule: null,
         label: 'Analytics',
         icon: null,
         href: '/analytics',
+        _count: {
+          childModules: 0,
+        },
         subModules: [],
       },
     ])
@@ -134,16 +144,24 @@ describe('admin modules API', () => {
         modules: [
           {
             id: '1',
+            parentModuleId: null,
+            parentModuleLabel: null,
             label: 'Analytics',
             icon: null,
             href: '/analytics',
+            childModuleCount: 0,
+            childModules: [],
             subModules: [],
           },
           {
             id: '2',
+            parentModuleId: null,
+            parentModuleLabel: null,
             label: 'CRM',
             icon: 'Users',
             href: null,
+            childModuleCount: 2,
+            childModules: [],
             subModules: [
               {
                 id: '11',
@@ -168,7 +186,7 @@ describe('admin modules API', () => {
     expect(JSON.stringify(payload)).not.toContain('updatedAt')
     expect(JSON.stringify(payload)).not.toContain('roleLinks')
     expect(moduleFindManyMock).toHaveBeenCalledWith({
-      orderBy: { label: 'asc' },
+      orderBy: [{ displayOrder: 'asc' }, { label: 'asc' }],
       select: moduleWithSubModulesSelect,
     })
   })
@@ -178,9 +196,14 @@ describe('admin modules API', () => {
     moduleFindFirstMock.mockResolvedValue(null)
     moduleCreateMock.mockResolvedValue({
       id: 5,
+      parentModuleId: null,
+      parentModule: null,
       label: 'Reports',
       icon: 'BarChart',
       href: null,
+      _count: {
+        childModules: 0,
+      },
       subModules: [],
     })
 
@@ -199,9 +222,13 @@ describe('admin modules API', () => {
       success: true,
       data: {
         id: '5',
+        parentModuleId: null,
+        parentModuleLabel: null,
         label: 'Reports',
         icon: 'BarChart',
         href: null,
+        childModuleCount: 0,
+        childModules: [],
         subModules: [],
       },
       message: 'Module created successfully',
@@ -218,6 +245,8 @@ describe('admin modules API', () => {
     expect(moduleCreateMock).toHaveBeenCalledWith({
       data: {
         label: 'Reports',
+        parentModuleId: null,
+        displayOrder: 1,
         icon: 'BarChart',
         href: null,
       },

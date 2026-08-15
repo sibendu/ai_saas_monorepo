@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client'
 import type {
+  AdminChildModuleSummary,
   AdminModuleSummary,
   AdminRoleModuleMappingData,
   AdminSubModuleSummary,
@@ -7,17 +8,40 @@ import type {
 
 export const moduleWithSubModulesSelect = {
   id: true,
+  parentModuleId: true,
   label: true,
+  displayOrder: true,
   icon: true,
   href: true,
-  subModules: {
-    orderBy: {
-      label: 'asc',
+  parentModule: {
+    select: {
+      id: true,
+      label: true,
     },
+  },
+  _count: {
+    select: {
+      childModules: true,
+    },
+  },
+  childModules: {
+    orderBy: [{ displayOrder: 'asc' }, { label: 'asc' }],
+    select: {
+      id: true,
+      parentModuleId: true,
+      label: true,
+      displayOrder: true,
+      icon: true,
+      href: true,
+    },
+  },
+  subModules: {
+    orderBy: [{ displayOrder: 'asc' }, { label: 'asc' }],
     select: {
       id: true,
       moduleId: true,
       label: true,
+      displayOrder: true,
       icon: true,
       href: true,
     },
@@ -37,10 +61,14 @@ function toStringId(id: number): string {
   return id.toString()
 }
 
-function compareByLabel(
-  left: { label: string },
-  right: { label: string }
+function compareByDisplayOrder(
+  left: { displayOrder: number; label: string },
+  right: { displayOrder: number; label: string }
 ): number {
+  if (left.displayOrder !== right.displayOrder) {
+    return left.displayOrder - right.displayOrder
+  }
+
   return left.label.localeCompare(right.label)
 }
 
@@ -51,14 +79,29 @@ function uniqueSortedStringIds(ids: number[]): string[] {
 export function mapAdminModule(module: AdminModuleWithSubModules): AdminModuleSummary {
   return {
     id: toStringId(module.id),
+    parentModuleId: module.parentModuleId ? toStringId(module.parentModuleId) : null,
+    parentModuleLabel: module.parentModule?.label ?? null,
     label: module.label,
+    displayOrder: module.displayOrder,
     icon: module.icon,
     href: module.href,
-    subModules: [...module.subModules].sort(compareByLabel).map(
+    childModuleCount: module._count.childModules,
+    childModules: [...(module.childModules ?? [])].sort(compareByDisplayOrder).map(
+      (childModule): AdminChildModuleSummary => ({
+        id: toStringId(childModule.id),
+        parentModuleId: toStringId(childModule.parentModuleId ?? module.id),
+        label: childModule.label,
+        displayOrder: childModule.displayOrder,
+        icon: childModule.icon,
+        href: childModule.href,
+      })
+    ),
+    subModules: [...module.subModules].sort(compareByDisplayOrder).map(
       (subModule): AdminSubModuleSummary => ({
         id: toStringId(subModule.id),
         moduleId: toStringId(subModule.moduleId),
         label: subModule.label,
+        displayOrder: subModule.displayOrder,
         icon: subModule.icon,
         href: subModule.href,
       })
@@ -67,7 +110,7 @@ export function mapAdminModule(module: AdminModuleWithSubModules): AdminModuleSu
 }
 
 export function mapAdminModules(modules: AdminModuleWithSubModules[]): AdminModuleSummary[] {
-  return [...modules].sort(compareByLabel).map(mapAdminModule)
+  return [...modules].sort(compareByDisplayOrder).map(mapAdminModule)
 }
 
 export function mapRoleModuleMapping(

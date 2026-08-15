@@ -270,7 +270,7 @@ export default function RoleManagement({ initialRoles }: RoleManagementProps) {
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      <span>{role.userCount} users</span>
+                      <span>{role.groupCount} groups</span>
                       <span className="mx-2 text-gray-300">/</span>
                       <span>{role.moduleCount} modules</span>
                     </td>

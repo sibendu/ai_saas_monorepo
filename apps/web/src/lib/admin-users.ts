@@ -4,10 +4,13 @@ export const adminUserSelect = {
   id: true,
   email: true,
   name: true,
+  firstName: true,
+  middleName: true,
+  lastName: true,
   company: true,
-  userRoles: {
+  userGroupMemberships: {
     select: {
-      role: {
+      group: {
         select: {
           id: true,
           name: true,
@@ -22,9 +25,12 @@ interface AdminUserWithRoles {
   id: number
   email: string
   name: string
+  firstName: string
+  middleName: string | null
+  lastName: string
   company: string | null
-  userRoles: {
-    role: {
+  userGroupMemberships: {
+    group: {
       id: number
       name: string
       description: string | null
@@ -37,11 +43,14 @@ export function mapAdminUser(user: AdminUserWithRoles): AdminUserSummary {
     id: user.id.toString(),
     email: user.email,
     name: user.name,
+    firstName: user.firstName,
+    middleName: user.middleName,
+    lastName: user.lastName,
     company: user.company,
-    roles: user.userRoles.map((userRole) => ({
-      id: userRole.role.id.toString(),
-      name: userRole.role.name,
-      description: userRole.role.description,
+    groups: user.userGroupMemberships.map((membership) => ({
+      id: membership.group.id.toString(),
+      name: membership.group.name,
+      description: membership.group.description,
     })),
   }
 }

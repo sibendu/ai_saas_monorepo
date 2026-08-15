@@ -11,7 +11,7 @@ function mapRole(role: {
   createdAt: Date
   updatedAt: Date
   _count: {
-    users: number
+    groups: number
     modules: number
   }
 }): AdminRoleSummary {
@@ -19,7 +19,7 @@ function mapRole(role: {
     id: role.id.toString(),
     name: role.name,
     description: role.description,
-    userCount: role._count.users,
+    groupCount: role._count.groups,
     moduleCount: role._count.modules,
     createdAt: role.createdAt.toISOString(),
     updatedAt: role.updatedAt.toISOString(),
@@ -73,7 +73,7 @@ export async function GET(): Promise<NextResponse> {
       include: {
         _count: {
           select: {
-            users: true,
+            groups: true,
             modules: true,
           },
         },
@@ -149,7 +149,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         include: {
           _count: {
             select: {
-              users: true,
+              groups: true,
               modules: true,
             },
           },

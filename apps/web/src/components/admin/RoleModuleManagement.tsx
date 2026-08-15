@@ -6,6 +6,7 @@ import {
   AdminRoleModuleMappingData,
   AdminRoleModuleMappingRequest,
   AdminRoleSummary,
+  AdminSubModuleSummary,
 } from '@saas/shared-types'
 import { readApiResponse } from '@/lib/client-api'
 
@@ -42,6 +43,72 @@ function toSelection(mapping: AdminRoleModuleMappingData): MappingSelection {
   })
 }
 
+function getModuleChildIds(module: AdminModuleSummary): string[] {
+  return module.childModules.map((childModule) => childModule.id)
+}
+
+function getVisibleLegacySubModules(module: AdminModuleSummary): AdminSubModuleSummary[] {
+  return module.childModules.length > 0 ? [] : module.subModules
+}
+
+function getVisibleLegacySubModuleIds(module: AdminModuleSummary): string[] {
+  return getVisibleLegacySubModules(module).map((subModule) => subModule.id)
+}
+
+function normalizeSelectionForModules(
+  selection: MappingSelection,
+  modules: AdminModuleSummary[]
+): MappingSelection {
+  const moduleIds = new Set(selection.moduleIds)
+  const subModuleIds = new Set<string>()
+  const selectedSubModuleIds = new Set(selection.subModuleIds)
+
+  for (const module of modules) {
+    if (module.parentModuleId) {
+      continue
+    }
+
+    for (const childModule of module.childModules) {
+      if (moduleIds.has(childModule.id)) {
+        moduleIds.add(module.id)
+      }
+    }
+
+    if (module.childModules.length > 0) {
+      for (const legacySubModule of module.subModules) {
+        if (!selectedSubModuleIds.has(legacySubModule.id)) {
+          continue
+        }
+
+        const matchingChildModule = module.childModules.find(
+          (childModule) =>
+            childModule.href === legacySubModule.href ||
+            childModule.label === legacySubModule.label
+        )
+
+        if (matchingChildModule) {
+          moduleIds.add(module.id)
+          moduleIds.add(matchingChildModule.id)
+        }
+      }
+
+      continue
+    }
+
+    for (const subModule of module.subModules) {
+      if (selectedSubModuleIds.has(subModule.id)) {
+        moduleIds.add(module.id)
+        subModuleIds.add(subModule.id)
+      }
+    }
+  }
+
+  return normalizeSelection({
+    moduleIds: [...moduleIds],
+    subModuleIds: [...subModuleIds],
+  })
+}
+
 export default function RoleModuleManagement({
   initialRoles,
   initialModules,
@@ -54,6 +121,8 @@ export default function RoleModuleManagement({
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [expandedModuleIds, setExpandedModuleIds] = useState<string[]>([])
+  const [roleFilter, setRoleFilter] = useState('')
 
   const selectedRole = useMemo(
     () => roles.find((role) => role.id === selectedRoleId) ?? null,
@@ -63,6 +132,25 @@ export default function RoleModuleManagement({
   const sortedRoles = useMemo(
     () => [...roles].sort((first, second) => first.name.localeCompare(second.name)),
     [roles]
+  )
+
+  const filteredRoles = useMemo(() => {
+    const normalizedFilter = roleFilter.trim().toLowerCase()
+
+    if (!normalizedFilter) {
+      return sortedRoles
+    }
+
+    return sortedRoles.filter((role) =>
+      [role.name, role.description ?? ''].some((value) =>
+        value.toLowerCase().includes(normalizedFilter)
+      )
+    )
+  }, [roleFilter, sortedRoles])
+
+  const topLevelModules = useMemo(
+    () => initialModules.filter((module) => !module.parentModuleId),
+    [initialModules]
   )
 
   useEffect(() => {
@@ -96,7 +184,7 @@ export default function RoleModuleManagement({
           return
         }
 
-        const loadedSelection = toSelection(payload.data)
+        const loadedSelection = normalizeSelectionForModules(toSelection(payload.data), initialModules)
 
         setSelection(loadedSelection)
         setPersistedMappings((currentMappings) => ({
@@ -131,23 +219,46 @@ export default function RoleModuleManagement({
 
   function toggleModule(moduleId: string) {
     setSelection((currentSelection) => {
+      const parentModule = topLevelModules.find((module) => module.id === moduleId)
+      const childModuleIds = parentModule ? getModuleChildIds(parentModule) : []
+      const legacySubModuleIds = parentModule ? getVisibleLegacySubModuleIds(parentModule) : []
       const isSelected = currentSelection.moduleIds.includes(moduleId)
       const nextSelection = isSelected
         ? {
             moduleIds: currentSelection.moduleIds.filter(
-              (selectedModuleId) => selectedModuleId !== moduleId
+              (selectedModuleId) =>
+                selectedModuleId !== moduleId && !childModuleIds.includes(selectedModuleId)
             ),
-            subModuleIds: currentSelection.subModuleIds.filter((selectedSubModuleId) => {
-              const parentModule = initialModules.find((module) => module.id === moduleId)
+            subModuleIds: currentSelection.subModuleIds.filter(
+              (selectedSubModuleId) => !legacySubModuleIds.includes(selectedSubModuleId)
+            ),
+          }
+        : {
+            moduleIds: [...currentSelection.moduleIds, moduleId, ...childModuleIds],
+            subModuleIds: [...currentSelection.subModuleIds, ...legacySubModuleIds],
+          }
 
-              return !parentModule?.subModules.some(
-                (subModule) => subModule.id === selectedSubModuleId
-              )
-            }),
+      return normalizeSelection(nextSelection)
+    })
+    setStatusMessage(null)
+    setErrorMessage(null)
+  }
+
+  function toggleChildModule(parentModuleId: string, childModuleId: string) {
+    setSelection((currentSelection) => {
+      const isSelected = currentSelection.moduleIds.includes(childModuleId)
+      const nextSelection = isSelected
+        ? {
+            ...currentSelection,
+            moduleIds: currentSelection.moduleIds.filter(
+              (selectedModuleId) => selectedModuleId !== childModuleId
+            ),
           }
         : {
             ...currentSelection,
-            moduleIds: [...currentSelection.moduleIds, moduleId],
+            moduleIds: currentSelection.moduleIds.includes(parentModuleId)
+              ? [...currentSelection.moduleIds, childModuleId]
+              : [...currentSelection.moduleIds, parentModuleId, childModuleId],
           }
 
       return normalizeSelection(nextSelection)
@@ -179,6 +290,14 @@ export default function RoleModuleManagement({
     setErrorMessage(null)
   }
 
+  function toggleModuleExpanded(moduleId: string) {
+    setExpandedModuleIds((currentExpandedModuleIds) =>
+      currentExpandedModuleIds.includes(moduleId)
+        ? currentExpandedModuleIds.filter((expandedModuleId) => expandedModuleId !== moduleId)
+        : [...currentExpandedModuleIds, moduleId]
+    )
+  }
+
   async function handleSave() {
     if (!selectedRoleId || !selectedRole) {
       return
@@ -189,7 +308,10 @@ export default function RoleModuleManagement({
     setErrorMessage(null)
 
     try {
-      const requestBody: AdminRoleModuleMappingRequest = normalizeSelection(selection)
+      const requestBody: AdminRoleModuleMappingRequest = normalizeSelectionForModules(
+        selection,
+        initialModules
+      )
       const response = await fetch(`/api/admin/roles/${selectedRoleId}/modules`, {
         method: 'PUT',
         headers: {
@@ -244,66 +366,50 @@ export default function RoleModuleManagement({
     )
   }
 
-  const hasModules = initialModules.length > 0
+  const hasModules = topLevelModules.length > 0
 
   return (
     <section className="space-y-5">
-      <div className="bg-white rounded-lg shadow p-4 sm:p-5">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(12rem,18rem)_auto] lg:items-end">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">Role-Module</h2>
-            <p className="mt-1 text-sm text-gray-500">
-              Select a role and update its visible modules.
-            </p>
-          </div>
-          <div>
-            <label
-              className="block text-xs font-semibold uppercase tracking-wide text-gray-500"
-              htmlFor="role-module-role"
-            >
-              Role
-            </label>
-            <select
-              id="role-module-role"
-              value={selectedRoleId ?? ''}
-              onChange={(event) => handleRoleChange(event.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
-              disabled={isLoading || isSaving}
-            >
-              {sortedRoles.map((role) => (
-                <option key={role.id} value={role.id}>
-                  {role.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button
-            type="button"
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
-            onClick={() => void handleSave()}
-            disabled={!selectedRoleId || !hasModules || isLoading || isSaving}
-          >
-            {isSaving ? 'Saving...' : 'Save access'}
-          </button>
-        </div>
-
-        {statusMessage && (
-          <p className="mt-4 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">
-            {statusMessage}
-          </p>
-        )}
-        {errorMessage && (
-          <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-            {errorMessage}
-          </p>
-        )}
-      </div>
-
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
         <div className="bg-white rounded-lg shadow p-4">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Roles</h3>
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="min-w-0 flex-1">
+              <label
+                className="block text-xs font-semibold uppercase tracking-wide text-gray-500"
+                htmlFor="role-module-filter"
+              >
+                Roles
+              </label>
+              <input
+                id="role-module-filter"
+                type="search"
+                value={roleFilter}
+                onChange={(event) => setRoleFilter(event.target.value)}
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+                placeholder="Filter roles"
+              />
+            </div>
+            <button
+              type="button"
+              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
+              onClick={() => void handleSave()}
+              disabled={!selectedRoleId || !hasModules || isLoading || isSaving}
+            >
+              {isSaving ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+          {statusMessage && (
+            <p className="mt-3 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">
+              {statusMessage}
+            </p>
+          )}
+          {errorMessage && (
+            <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+              {errorMessage}
+            </p>
+          )}
           <ul className="mt-4 divide-y divide-gray-100">
-            {sortedRoles.map((role) => {
+            {filteredRoles.map((role) => {
               const isSelected = role.id === selectedRoleId
               const cachedMapping = persistedMappings[role.id]
               const moduleCount = cachedMapping
@@ -331,6 +437,11 @@ export default function RoleModuleManagement({
               )
             })}
           </ul>
+          {filteredRoles.length === 0 && (
+            <p className="mt-4 rounded-md bg-gray-50 px-3 py-2 text-sm text-gray-500">
+              No roles match this filter.
+            </p>
+          )}
         </div>
 
         <div className="bg-white rounded-lg shadow p-4">
@@ -357,39 +468,100 @@ export default function RoleModuleManagement({
                   Loading role module access...
                 </p>
               )}
-              {initialModules.map((module) => {
+              {topLevelModules.map((module) => {
                 const moduleCheckboxId = `role-module-${module.id}`
                 const isModuleChecked = selection.moduleIds.includes(module.id)
+                const visibleLegacySubModules = getVisibleLegacySubModules(module)
+                const hasSubModules =
+                  module.childModules.length > 0 || visibleLegacySubModules.length > 0
+                const isExpanded = expandedModuleIds.includes(module.id)
 
                 return (
                   <div key={module.id} className="rounded-md border border-gray-200 p-3">
-                    <label
-                      className="flex items-start gap-3 text-sm font-medium text-gray-900"
-                      htmlFor={moduleCheckboxId}
-                    >
-                      <input
-                        id={moduleCheckboxId}
-                        type="checkbox"
-                        className="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600"
-                        checked={isModuleChecked}
-                        onChange={() => toggleModule(module.id)}
-                        aria-label={`${module.label} module access for ${
-                          selectedRole?.name ?? 'selected role'
-                        }`}
-                      />
-                      <span>
-                        <span className="block">{module.label}</span>
-                        {module.href && (
-                          <span className="mt-1 block text-xs font-normal text-gray-500">
-                            {module.href}
+                    <div className="flex items-start gap-3">
+                      <label
+                        className="flex min-w-0 flex-1 items-start gap-3 text-sm font-medium text-gray-900"
+                        htmlFor={moduleCheckboxId}
+                      >
+                        <input
+                          id={moduleCheckboxId}
+                          type="checkbox"
+                          className="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600"
+                          checked={isModuleChecked}
+                          onChange={() => toggleModule(module.id)}
+                          aria-label={`${module.label} module access for ${
+                            selectedRole?.name ?? 'selected role'
+                          }`}
+                        />
+                        <span className="min-w-0">
+                          <span className="block">{module.label}</span>
+                          {module.href && (
+                            <span className="mt-1 block truncate text-xs font-normal text-gray-500">
+                              {module.href}
+                            </span>
+                          )}
+                        </span>
+                      </label>
+                      {hasSubModules && (
+                        <button
+                          type="button"
+                          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                          onClick={() => toggleModuleExpanded(module.id)}
+                          aria-expanded={isExpanded}
+                          aria-controls={`role-module-children-${module.id}`}
+                          aria-label={`${isExpanded ? 'Hide' : 'Show'} sub-modules for ${
+                            module.label
+                          }`}
+                        >
+                          <span
+                            className={`text-base leading-none transition-transform ${
+                              isExpanded ? 'rotate-90' : ''
+                            }`}
+                            aria-hidden="true"
+                          >
+                            &gt;
                           </span>
-                        )}
-                      </span>
-                    </label>
+                        </button>
+                      )}
+                    </div>
 
-                    {module.subModules.length > 0 ? (
-                      <div className="mt-3 grid gap-2 pl-7 sm:grid-cols-2">
-                        {module.subModules.map((subModule) => {
+                    {hasSubModules && isExpanded && (
+                      <div
+                        id={`role-module-children-${module.id}`}
+                        className="mt-3 grid gap-2 pl-7 sm:grid-cols-2"
+                      >
+                        {module.childModules.map((childModule) => {
+                          const childModuleCheckboxId = `role-child-module-${childModule.id}`
+                          const isChildModuleChecked = selection.moduleIds.includes(childModule.id)
+
+                          return (
+                            <label
+                              key={childModule.id}
+                              className="flex items-start gap-2 rounded-md bg-gray-50 px-2.5 py-2 text-xs font-medium text-gray-700"
+                              htmlFor={childModuleCheckboxId}
+                            >
+                              <input
+                                id={childModuleCheckboxId}
+                                type="checkbox"
+                                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600"
+                                checked={isChildModuleChecked}
+                                onChange={() => toggleChildModule(module.id, childModule.id)}
+                                aria-label={`${childModule.label} sub-module access for ${
+                                  selectedRole?.name ?? 'selected role'
+                                }`}
+                              />
+                              <span>
+                                <span className="block">{childModule.label}</span>
+                                {childModule.href && (
+                                  <span className="mt-0.5 block font-normal text-gray-500">
+                                    {childModule.href}
+                                  </span>
+                                )}
+                              </span>
+                            </label>
+                          )
+                        })}
+                        {visibleLegacySubModules.map((subModule) => {
                           const subModuleCheckboxId = `role-sub-module-${subModule.id}`
                           const isSubModuleChecked = selection.subModuleIds.includes(subModule.id)
 
@@ -419,7 +591,8 @@ export default function RoleModuleManagement({
                           )
                         })}
                       </div>
-                    ) : (
+                    )}
+                    {!hasSubModules && (
                       <p className="mt-2 pl-7 text-sm text-gray-500">No sub-modules</p>
                     )}
                   </div>

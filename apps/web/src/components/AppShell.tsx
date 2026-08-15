@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, useMemo, useState } from 'react'
+import { ReactNode, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
@@ -13,6 +13,8 @@ import {
   menuUiConfig,
 } from '@/config/navigation'
 import TopMenu from '@/components/TopMenu'
+
+const sidebarExpandedStorageKey = 'saas-sidebar-expanded-sections'
 
 interface ShellUser {
   name?: string | null
@@ -94,6 +96,42 @@ function Icon({ name, className = 'w-5 h-5' }: { name: MenuIconKey; className?: 
   )
 }
 
+function getInitialExpandedSections(menuSectionsToSeed: MenuSectionConfig[]): Record<string, boolean> {
+  const defaultExpandedSections = menuSectionsToSeed.reduce((acc, section) => {
+    acc[section.id] = false
+    return acc
+  }, {} as Record<string, boolean>)
+
+  if (typeof window === 'undefined') {
+    return defaultExpandedSections
+  }
+
+  try {
+    const storedValue = window.localStorage.getItem(sidebarExpandedStorageKey)
+
+    if (!storedValue) {
+      return defaultExpandedSections
+    }
+
+    const storedSectionIds = JSON.parse(storedValue)
+
+    if (!Array.isArray(storedSectionIds)) {
+      return defaultExpandedSections
+    }
+
+    const sectionIds = new Set(
+      storedSectionIds.filter((sectionId): sectionId is string => typeof sectionId === 'string')
+    )
+
+    return menuSectionsToSeed.reduce((acc, section) => {
+      acc[section.id] = sectionIds.has(section.id)
+      return acc
+    }, {} as Record<string, boolean>)
+  } catch {
+    return defaultExpandedSections
+  }
+}
+
 export default function AppShell({
   user,
   pageTitle,
@@ -107,10 +145,7 @@ export default function AppShell({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() =>
-    visibleMenuSections.reduce((acc, section) => {
-      acc[section.id] = true
-      return acc
-    }, {} as Record<string, boolean>)
+    getInitialExpandedSections(visibleMenuSections)
   )
 
   const sectionWithActiveItem = useMemo(() => {
@@ -125,6 +160,23 @@ export default function AppShell({
       [sectionId]: !prev[sectionId],
     }))
   }
+
+  useEffect(() => {
+    setExpandedSections((currentSections) =>
+      visibleMenuSections.reduce((acc, section) => {
+        acc[section.id] = currentSections[section.id] ?? false
+        return acc
+      }, {} as Record<string, boolean>)
+    )
+  }, [visibleMenuSections])
+
+  useEffect(() => {
+    const expandedSectionIds = Object.entries(expandedSections)
+      .filter(([, isExpanded]) => isExpanded)
+      .map(([sectionId]) => sectionId)
+
+    window.localStorage.setItem(sidebarExpandedStorageKey, JSON.stringify(expandedSectionIds))
+  }, [expandedSections])
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: '/login' })
@@ -174,6 +226,8 @@ export default function AppShell({
                 key={section.id}
                 href={directItem.href}
                 onClick={() => setIsMobileSidebarOpen(false)}
+                aria-label={section.label}
+                title={section.label}
                 className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${menuUiConfig.sectionTextClass} ${menuUiConfig.sectionHoverClass} ${isActive ? 'bg-indigo-50 text-indigo-700' : ''}`}
               >
                 <Icon name={section.icon} className="w-4 h-4" />
@@ -187,6 +241,7 @@ export default function AppShell({
               <button
                 type="button"
                 onClick={() => toggleSection(section.id)}
+                aria-label={section.label}
                 title={section.label}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${menuUiConfig.sectionTextClass} ${menuUiConfig.sectionHoverClass} ${isActiveSection ? 'bg-indigo-50' : ''}`}
               >

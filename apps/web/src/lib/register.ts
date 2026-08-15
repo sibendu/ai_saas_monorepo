@@ -1,5 +1,6 @@
 import { prisma } from './prisma'
 import bcrypt from 'bcryptjs'
+import { splitDisplayName } from './profile'
 
 export interface RegisterUserData {
     name?: string
@@ -48,11 +49,15 @@ export async function registerUser(data: RegisterUserData): Promise<RegisterResu
 
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10)
+        const structuredName = splitDisplayName(name)
 
         // Create customer in database
         const customer = await prisma.customer.create({
             data: {
                 email,
+                firstName: structuredName.firstName,
+                middleName: structuredName.middleName,
+                lastName: structuredName.lastName,
                 password: hashedPassword,
                 name,
                 company: null,

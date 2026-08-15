@@ -41,15 +41,19 @@ export function getConfiguredMenuLayout(): MenuLayout {
   return process.env.MENU_LAYOUT === 'top' ? 'top' : 'left'
 }
 
+export function isMenuLayout(value: unknown): value is MenuLayout {
+  return value === 'left' || value === 'top'
+}
+
 export const menuSections: MenuSectionConfig[] = [
   {
-    id: 'dashboard',
-    label: 'Dashboard',
+    id: 'home',
+    label: 'Home',
     icon: 'workspace',
     items: [
       {
-        label: 'Dashboard',
-        href: '/dashboard',
+        label: 'Home',
+        href: '/home',
         icon: 'workspace',
       },
     ],

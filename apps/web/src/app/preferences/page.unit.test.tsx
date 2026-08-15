@@ -18,7 +18,17 @@ vi.mock('@/lib/prisma', () => ({
 }))
 
 vi.mock('./PreferencesForm', () => ({
-  default: ({ user }: { user: { company?: string | null; email?: string | null; name?: string | null } }) => ({
+  default: ({
+    user,
+  }: {
+    user: {
+      company?: string | null
+      email?: string | null
+      firstName?: string | null
+      lastName?: string | null
+      name?: string | null
+    }
+  }) => ({
     props: {
       user,
     },
@@ -56,8 +66,14 @@ describe('PreferencesPage', () => {
       },
     })
     mocks.findFirst.mockResolvedValue({
+      addresses: [],
       company: 'Acme',
+      contacts: [],
+      dob: null,
       email: 'db@example.com',
+      firstName: 'Database',
+      lastName: 'User',
+      middleName: null,
       name: 'Database User',
     })
 
@@ -68,8 +84,34 @@ describe('PreferencesPage', () => {
         email: 'session@example.com',
       },
       select: {
+        addresses: {
+          orderBy: { id: 'asc' },
+          select: {
+            addressLine1: true,
+            addressLine2: true,
+            addressLine3: true,
+            city: true,
+            country: true,
+            district: true,
+            pin: true,
+            state: true,
+            type: true,
+          },
+        },
         company: true,
+        contacts: {
+          orderBy: { id: 'asc' },
+          select: {
+            contact: true,
+            countryCode: true,
+            type: true,
+          },
+        },
+        dob: true,
         email: true,
+        firstName: true,
+        lastName: true,
+        middleName: true,
         name: true,
       },
     })
@@ -78,6 +120,8 @@ describe('PreferencesPage', () => {
         user: {
           company: 'Acme',
           email: 'db@example.com',
+          firstName: 'Database',
+          lastName: 'User',
           name: 'Database User',
         },
       },

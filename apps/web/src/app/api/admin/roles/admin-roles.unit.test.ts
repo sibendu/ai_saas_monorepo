@@ -86,7 +86,7 @@ describe('admin roles API', () => {
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-02T00:00:00.000Z'),
         _count: {
-          users: 1,
+          groups: 1,
           modules: 4,
         },
       },
@@ -101,7 +101,7 @@ describe('admin roles API', () => {
           {
             id: '1',
             name: 'Admin',
-            userCount: 1,
+              groupCount: 1,
             moduleCount: 4,
           },
         ],
@@ -197,7 +197,7 @@ describe('admin roles API', () => {
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       updatedAt: new Date('2026-01-02T00:00:00.000Z'),
       _count: {
-        users: 0,
+        groups: 0,
         modules: 0,
       },
     })

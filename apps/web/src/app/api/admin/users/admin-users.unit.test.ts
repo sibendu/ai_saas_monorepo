@@ -61,6 +61,9 @@ describe('admin users API', () => {
         id: 2,
         email: 'jane@example.com',
         name: 'Jane Admin',
+        firstName: 'Jane',
+        middleName: 'A',
+        lastName: 'Admin',
         company: 'Acme',
         userRoles: [
           {
@@ -68,6 +71,15 @@ describe('admin users API', () => {
               id: 1,
               name: 'Admin',
               description: 'Full access',
+            },
+          },
+        ],
+        userGroupMemberships: [
+          {
+            group: {
+              id: 7,
+              name: 'Support Team',
+              description: 'Support users',
             },
           },
         ],
@@ -86,12 +98,15 @@ describe('admin users API', () => {
             id: '2',
             email: 'jane@example.com',
             name: 'Jane Admin',
+            firstName: 'Jane',
+            middleName: 'A',
+            lastName: 'Admin',
             company: 'Acme',
-            roles: [
+            groups: [
               {
-                id: '1',
-                name: 'Admin',
-                description: 'Full access',
+                id: '7',
+                name: 'Support Team',
+                description: 'Support users',
               },
             ],
           },

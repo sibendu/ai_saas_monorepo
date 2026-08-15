@@ -17,7 +17,7 @@ function mapRole(role: {
   createdAt: Date
   updatedAt: Date
   _count: {
-    users: number
+    groups: number
     modules: number
   }
 }): AdminRoleSummary {
@@ -25,7 +25,7 @@ function mapRole(role: {
     id: role.id.toString(),
     name: role.name,
     description: role.description,
-    userCount: role._count.users,
+    groupCount: role._count.groups,
     moduleCount: role._count.modules,
     createdAt: role.createdAt.toISOString(),
     updatedAt: role.updatedAt.toISOString(),
@@ -165,7 +165,7 @@ export async function PUT(request: Request, context: RouteContext): Promise<Next
         include: {
           _count: {
             select: {
-              users: true,
+              groups: true,
               modules: true,
             },
           },
@@ -246,7 +246,7 @@ export async function DELETE(_request: Request, context: RouteContext): Promise<
       include: {
         _count: {
           select: {
-            users: true,
+            groups: true,
             modules: true,
           },
         },
@@ -267,11 +267,11 @@ export async function DELETE(_request: Request, context: RouteContext): Promise<
       )
     }
 
-    if (role._count.users > 0 || role._count.modules > 0) {
+    if (role._count.groups > 0 || role._count.modules > 0) {
       return NextResponse.json<ApiResponse<never>>(
         {
           success: false,
-          error: 'Role cannot be deleted while it has assigned users or module access',
+          error: 'Role cannot be deleted while it has assigned groups or module access',
         },
         { status: 409 }
       )
@@ -281,7 +281,7 @@ export async function DELETE(_request: Request, context: RouteContext): Promise<
       const deleted = await tx.role.deleteMany({
         where: {
           id: parsedRoleId,
-          users: { none: {} },
+          groups: { none: {} },
           modules: { none: {} },
         },
       })
@@ -305,7 +305,7 @@ export async function DELETE(_request: Request, context: RouteContext): Promise<
       return NextResponse.json<ApiResponse<never>>(
         {
           success: false,
-          error: 'Role cannot be deleted while it has assigned users or module access',
+          error: 'Role cannot be deleted while it has assigned groups or module access',
         },
         { status: 409 }
       )

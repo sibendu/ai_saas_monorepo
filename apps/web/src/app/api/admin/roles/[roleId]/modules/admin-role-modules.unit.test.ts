@@ -398,7 +398,7 @@ describe('admin role module mapping API', () => {
     expectNoMutation()
   })
 
-  it('rejects sub-modules that do not belong to a selected module before mutation', async () => {
+  it('adds parent modules for selected sub-modules before mutation', async () => {
     roleFindUniqueMock.mockResolvedValue({ id: 2, name: 'Sales' })
     moduleFindManyMock.mockResolvedValue([{ id: 1 }])
     subModuleFindManyMock.mockResolvedValue([{ id: 10, moduleId: 3 }])
@@ -409,11 +409,23 @@ describe('admin role module mapping API', () => {
     )
 
     await expect(response.json()).resolves.toEqual({
-      success: false,
-      error: 'Sub-module does not belong to a selected module',
+      success: true,
+      data: {
+        roleId: '2',
+        moduleIds: ['1', '3'],
+        subModuleIds: ['10'],
+      },
+      message: 'Role module access updated successfully',
     })
-    expect(response.status).toBe(400)
-    expectNoMutation()
+    expect(response.status).toBe(200)
+    expect(transactionMock).toHaveBeenCalledTimes(1)
+    expect(txRoleModuleCreateManyMock).toHaveBeenCalledWith({
+      data: [
+        { roleId: 2, moduleId: 1, subModuleId: null },
+        { roleId: 2, moduleId: 3, subModuleId: null },
+        { roleId: 2, moduleId: 3, subModuleId: 10 },
+      ],
+    })
   })
 
   it('rejects empty access for the canonical Admin role without mutation', async () => {

@@ -15,16 +15,16 @@ export const availableThemeStyles: AvailableThemeStyle[] = [
   {
     name: 'light',
     label: 'Light',
-    description: 'Bright neutral interface for everyday work.',
+    description: 'Airy sky and rose interface with soft blue surfaces.',
     href: '/theme-light.css',
-    swatches: ['#4f46e5', '#ffffff', '#f9fafb'],
+    swatches: ['#0284c7', '#e0f2fe', '#e11d48'],
   },
   {
     name: 'dark',
-    label: 'Dark',
-    description: 'Low-light interface with deep surfaces and vivid accents.',
+    label: 'Nation',
+    description: 'Saffron header with light green workspace sections.',
     href: '/theme-dark.css',
-    swatches: ['#818cf8', '#1e293b', '#0f172a'],
+    swatches: ['#ff9933', '#dcfce7', '#16a34a'],
   },
   {
     name: 'default',

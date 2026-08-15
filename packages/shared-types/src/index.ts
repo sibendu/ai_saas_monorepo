@@ -17,6 +17,7 @@ export interface Role {
 export interface Module {
   id: string;
   label: string;
+  displayOrder?: number;
   icon?: string | null;
   href?: string | null;
   subModules?: SubModule[];
@@ -26,6 +27,7 @@ export interface SubModule {
   id: string;
   moduleId: string;
   label: string;
+  displayOrder?: number;
   icon?: string | null;
   href: string;
 }
@@ -33,6 +35,7 @@ export interface SubModule {
 export interface AllowedSubModule {
   id: string;
   label: string;
+  displayOrder?: number;
   icon?: string | null;
   href: string;
 }
@@ -40,6 +43,7 @@ export interface AllowedSubModule {
 export interface AllowedModule {
   id: string;
   label: string;
+  displayOrder?: number;
   icon?: string | null;
   href?: string | null;
   subModules: AllowedSubModule[];
@@ -75,7 +79,7 @@ export interface AdminRoleSummary {
   id: string;
   name: string;
   description?: string | null;
-  userCount: number;
+  groupCount: number;
   moduleCount: number;
   createdAt: string;
   updatedAt: string;
@@ -89,15 +93,30 @@ export interface AdminSubModuleSummary {
   id: string;
   moduleId: string;
   label: string;
+  displayOrder: number;
   icon?: string | null;
   href: string;
 }
 
-export interface AdminModuleSummary {
+export interface AdminChildModuleSummary {
   id: string;
+  parentModuleId: string;
   label: string;
+  displayOrder: number;
   icon?: string | null;
   href?: string | null;
+}
+
+export interface AdminModuleSummary {
+  id: string;
+  parentModuleId?: string | null;
+  parentModuleLabel?: string | null;
+  label: string;
+  displayOrder: number;
+  icon?: string | null;
+  href?: string | null;
+  childModuleCount: number;
+  childModules: AdminChildModuleSummary[];
   subModules: AdminSubModuleSummary[];
 }
 
@@ -107,6 +126,8 @@ export interface AdminModulesData {
 
 export interface AdminModuleMutationRequest {
   label: string;
+  parentModuleId?: string | null;
+  displayOrder?: number | null;
   icon?: string | null;
   href?: string | null;
 }
@@ -137,12 +158,58 @@ export interface AdminUserSummary {
   id: string;
   email: string;
   name: string;
+  firstName: string;
+  middleName?: string | null;
+  lastName: string;
   company?: string | null;
-  roles: AdminUserRoleSummary[];
+  groups: AdminUserGroupMembershipSummary[];
 }
 
 export interface AdminUsersData {
   users: AdminUserSummary[];
+}
+
+export interface AdminUserGroupMembershipSummary {
+  id: string;
+  name: string;
+  description?: string | null;
+}
+
+export interface AdminUserGroupSummary {
+  id: string;
+  name: string;
+  description?: string | null;
+  memberCount: number;
+  roles: AdminUserRoleSummary[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminUserGroupsData {
+  userGroups: AdminUserGroupSummary[];
+}
+
+export interface AdminUserGroupMutationRequest {
+  name: string;
+  description?: string | null;
+}
+
+export interface AdminUserGroupUsersData {
+  group: AdminUserGroupSummary;
+  users: AdminUserSummary[];
+}
+
+export interface AdminUserGroupUserAssignmentRequest {
+  userId: string;
+}
+
+export interface AdminUserGroupRolesData {
+  group: AdminUserGroupSummary;
+  roles: AdminUserRoleSummary[];
+}
+
+export interface AdminUserGroupRoleAssignmentRequest {
+  roleIds: string[];
 }
 
 export interface AdminUserMutationRequest {
@@ -151,8 +218,8 @@ export interface AdminUserMutationRequest {
   company?: string | null;
 }
 
-export interface AdminUserRoleAssignmentRequest {
-  roleIds: string[];
+export interface AdminUserGroupAssignmentRequest {
+  groupIds: string[];
 }
 
 export type AdminAuditAction =
@@ -161,9 +228,10 @@ export type AdminAuditAction =
   | 'ROLE_DELETED'
   | 'USER_UPDATED'
   | 'USER_ROLES_UPDATED'
+  | 'GROUP_ROLES_UPDATED'
   | 'ROLE_MODULES_UPDATED';
 
-export type AdminAuditEntityType = 'ROLE' | 'CUSTOMER' | 'USER_ROLE' | 'ROLE_MODULE';
+export type AdminAuditEntityType = 'ROLE' | 'CUSTOMER' | 'USER_ROLE' | 'GROUP_ROLE' | 'ROLE_MODULE';
 
 export interface AdminAuditLogSummary {
   id: string;
@@ -210,6 +278,24 @@ export interface Customer {
 export interface CustomersResponse {
   customers: Customer[];
   total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  filters: CustomerSearchFilters;
+}
+
+export interface CustomerSearchFilters {
+  name: string;
+  company: string;
+  email: string;
+}
+
+export interface CustomerMutationRequest {
+  name: string;
+  email: string;
+  company: string;
+  phone: string;
+  status: Customer['status'];
 }
 
 export interface Task {
@@ -244,10 +330,25 @@ export interface DashboardCampaign {
   roas: string;
 }
 
+export interface DashboardRevenueDetail {
+  label: string;
+  value: string;
+  tone?: 'default' | 'accent';
+}
+
+export interface DashboardRevenueSummary {
+  value: string;
+  delta: string;
+  details: DashboardRevenueDetail[];
+}
+
 export interface DashboardData {
+  variant: 'admin' | 'sales' | 'crm' | 'marketing' | 'general';
   welcomeMessage: string;
+  summaryMessage: string;
   kpiCards: DashboardKpi[];
   revenueSeries: number[];
+  revenueSummary: DashboardRevenueSummary;
   channelBreakdown: DashboardChannel[];
   topCampaigns: DashboardCampaign[];
 }
@@ -256,6 +357,7 @@ export interface DashboardRequest {
   user: {
     email: string;
     name?: string | null;
+    roleNames?: string[];
   };
 }
 

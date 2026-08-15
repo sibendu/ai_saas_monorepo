@@ -46,7 +46,7 @@ describe('admin auth helpers', () => {
       email: 'admin@example.com',
       name: 'Admin User',
       company: 'SaaS Foundation',
-      userRoles: [{ role: { name: 'Admin' } }],
+      userGroupMemberships: [{ group: { roles: [{ role: { name: 'Admin' } }] } }],
     })
 
     await expect(getAdminAuthorization()).resolves.toMatchObject({
@@ -68,7 +68,7 @@ describe('admin auth helpers', () => {
       email: 'user@example.com',
       name: 'User',
       company: null,
-      userRoles: [{ role: { name: 'User' } }],
+      userGroupMemberships: [{ group: { roles: [{ role: { name: 'User' } }] } }],
     })
 
     await expect(getAdminAuthorization()).resolves.toEqual({
@@ -100,7 +100,7 @@ describe('admin auth helpers', () => {
     consoleErrorMock.mockRestore()
   })
 
-  it('redirects non-admin page access to the dashboard', async () => {
+  it('redirects non-admin page access to home', async () => {
     getServerSessionMock.mockResolvedValue({
       user: {
         email: 'user@example.com',
@@ -111,12 +111,12 @@ describe('admin auth helpers', () => {
       email: 'user@example.com',
       name: 'User',
       company: null,
-      userRoles: [{ role: { name: 'User' } }],
+      userGroupMemberships: [{ group: { roles: [{ role: { name: 'User' } }] } }],
     })
 
     await requireAdminSession()
 
-    expect(redirectMock).toHaveBeenCalledWith('/dashboard')
+    expect(redirectMock).toHaveBeenCalledWith('/home')
   })
 
   it('fails closed when the shell admin-menu lookup errors', async () => {

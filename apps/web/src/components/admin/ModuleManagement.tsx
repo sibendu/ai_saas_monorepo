@@ -15,12 +15,21 @@ interface ModuleManagementProps {
 
 interface ModuleFormState {
   label: string
+  parentModuleId: string
+  displayOrder: string
   icon: string
   href: string
 }
 
+interface HierarchicalModuleRow {
+  module: AdminModuleSummary
+  depth: number
+}
+
 const emptyForm: ModuleFormState = {
   label: '',
+  parentModuleId: '',
+  displayOrder: '',
   icon: '',
   href: '',
 }
@@ -28,9 +37,62 @@ const emptyForm: ModuleFormState = {
 function toFormState(module: AdminModuleSummary): ModuleFormState {
   return {
     label: module.label,
+    parentModuleId: module.parentModuleId ?? '',
+    displayOrder: module.displayOrder.toString(),
     icon: module.icon ?? '',
     href: module.href ?? '',
   }
+}
+
+function compareModules(first: AdminModuleSummary, second: AdminModuleSummary): number {
+  if (first.displayOrder !== second.displayOrder) {
+    return first.displayOrder - second.displayOrder
+  }
+
+  return first.label.localeCompare(second.label)
+}
+
+function sortModulesForHierarchy(
+  modules: AdminModuleSummary[],
+  collapsedModuleIds: Set<string>
+): HierarchicalModuleRow[] {
+  const modulesByParent = new Map<string, AdminModuleSummary[]>()
+  const sortedModules: HierarchicalModuleRow[] = []
+  const visitedModuleIds = new Set<string>()
+  const moduleIds = new Set(modules.map((module) => module.id))
+
+  for (const module of modules) {
+    const parentKey = module.parentModuleId ?? ''
+    const siblings = modulesByParent.get(parentKey) ?? []
+    siblings.push(module)
+    modulesByParent.set(parentKey, siblings)
+  }
+
+  for (const siblings of modulesByParent.values()) {
+    siblings.sort(compareModules)
+  }
+
+  function visit(parentId: string, depth: number) {
+    for (const module of modulesByParent.get(parentId) ?? []) {
+      sortedModules.push({ module, depth })
+      visitedModuleIds.add(module.id)
+      if (!collapsedModuleIds.has(module.id)) {
+        visit(module.id, depth + 1)
+      }
+    }
+  }
+
+  visit('', 0)
+
+  for (const module of [...modules].sort(compareModules)) {
+    const isOrphaned = module.parentModuleId ? !moduleIds.has(module.parentModuleId) : false
+
+    if (!visitedModuleIds.has(module.id) && isOrphaned) {
+      sortedModules.push({ module, depth: 0 })
+    }
+  }
+
+  return sortedModules
 }
 
 export default function ModuleManagement({ initialModules, onModulesChange }: ModuleManagementProps) {
@@ -38,11 +100,24 @@ export default function ModuleManagement({ initialModules, onModulesChange }: Mo
   const [formState, setFormState] = useState<ModuleFormState>(emptyForm)
   const [editingModuleId, setEditingModuleId] = useState<string | null>(null)
   const [editingState, setEditingState] = useState<ModuleFormState>(emptyForm)
+  const [collapsedModuleIds, setCollapsedModuleIds] = useState<Set<string>>(
+    () =>
+      new Set(
+        initialModules
+          .filter((module) => module.childModuleCount > 0)
+          .map((module) => module.id)
+      )
+  )
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
   const sortedModules = useMemo(
+    () => sortModulesForHierarchy(modules, collapsedModuleIds),
+    [collapsedModuleIds, modules]
+  )
+
+  const parentModuleOptions = useMemo(
     () => [...modules].sort((first, second) => first.label.localeCompare(second.label)),
     [modules]
   )
@@ -62,9 +137,29 @@ export default function ModuleManagement({ initialModules, onModulesChange }: Mo
   function toRequestBody(state: ModuleFormState): AdminModuleMutationRequest {
     return {
       label: state.label,
+      parentModuleId: state.parentModuleId || null,
+      displayOrder: state.displayOrder ? Number(state.displayOrder) : null,
       icon: state.icon,
       href: state.href,
     }
+  }
+
+  function getParentOptions(moduleId?: string) {
+    return parentModuleOptions.filter((module) => module.id !== moduleId)
+  }
+
+  function toggleCollapsed(moduleId: string) {
+    setCollapsedModuleIds((currentIds) => {
+      const nextIds = new Set(currentIds)
+
+      if (nextIds.has(moduleId)) {
+        nextIds.delete(moduleId)
+      } else {
+        nextIds.add(moduleId)
+      }
+
+      return nextIds
+    })
   }
 
   async function handleCreateModule(event: FormEvent<HTMLFormElement>) {
@@ -90,11 +185,22 @@ export default function ModuleManagement({ initialModules, onModulesChange }: Mo
         throw new Error(payload.error ?? 'Failed to create module')
       }
 
+      const createdModule = payload.data
+
       setModules((currentModules) => {
-        const nextModules = [...currentModules, payload.data as AdminModuleSummary]
+        const nextModules = [...currentModules, createdModule]
         onModulesChange?.(nextModules)
 
         return nextModules
+      })
+      setCollapsedModuleIds((currentIds) => {
+        const nextIds = new Set(currentIds)
+
+        if (createdModule.parentModuleId) {
+          nextIds.delete(createdModule.parentModuleId)
+        }
+
+        return nextIds
       })
       setFormState(emptyForm)
       setStatusMessage(payload.message ?? 'Module created successfully')
@@ -199,7 +305,7 @@ export default function ModuleManagement({ initialModules, onModulesChange }: Mo
             </p>
           </div>
           <form
-            className="grid gap-2 sm:grid-cols-[minmax(0,10rem)_minmax(0,8rem)_minmax(0,12rem)_auto]"
+            className="grid gap-2 sm:grid-cols-[minmax(0,10rem)_minmax(0,12rem)_minmax(0,7rem)_minmax(0,8rem)_minmax(0,12rem)_auto]"
             onSubmit={handleCreateModule}
           >
             <label className="sr-only" htmlFor="module-label">
@@ -213,6 +319,41 @@ export default function ModuleManagement({ initialModules, onModulesChange }: Mo
               }
               className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
               placeholder="Label"
+              disabled={isSaving}
+            />
+            <label className="sr-only" htmlFor="module-parent">
+              Parent module
+            </label>
+            <select
+              id="module-parent"
+              value={formState.parentModuleId}
+              onChange={(event) =>
+                setFormState((state) => ({ ...state, parentModuleId: event.target.value }))
+              }
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+              disabled={isSaving}
+            >
+              <option value="">Top level</option>
+              {getParentOptions().map((module) => (
+                <option key={module.id} value={module.id}>
+                  {module.label}
+                </option>
+              ))}
+            </select>
+            <label className="sr-only" htmlFor="module-order">
+              Order
+            </label>
+            <input
+              id="module-order"
+              type="number"
+              min="1"
+              step="1"
+              value={formState.displayOrder}
+              onChange={(event) =>
+                setFormState((state) => ({ ...state, displayOrder: event.target.value }))
+              }
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+              placeholder="Order"
               disabled={isSaving}
             />
             <label className="sr-only" htmlFor="module-icon">
@@ -271,13 +412,19 @@ export default function ModuleManagement({ initialModules, onModulesChange }: Mo
                 Module
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Parent
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Order
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Icon
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Href
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                Sub-modules
+                Children
               </th>
               <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Actions
@@ -287,16 +434,21 @@ export default function ModuleManagement({ initialModules, onModulesChange }: Mo
           <tbody className="divide-y divide-gray-100 bg-white">
             {sortedModules.length === 0 ? (
               <tr>
-                <td className="px-4 py-6 text-center text-sm text-gray-500" colSpan={5}>
+                <td className="px-4 py-6 text-center text-sm text-gray-500" colSpan={7}>
                   No modules have been created yet.
                 </td>
               </tr>
             ) : (
-              sortedModules.map((module) => {
+              sortedModules.map(({ module, depth }) => {
                 const isEditing = editingModuleId === module.id
+                const hasChildren = module.childModuleCount > 0
+                const isCollapsed = collapsedModuleIds.has(module.id)
 
                 return (
-                  <tr key={module.id} className="align-top">
+                  <tr
+                    key={module.id}
+                    className={`align-top ${depth > 0 ? 'bg-slate-50/70' : 'bg-white'}`}
+                  >
                     <td className="px-4 py-3 text-sm font-medium text-gray-900">
                       {isEditing ? (
                         <input
@@ -311,7 +463,87 @@ export default function ModuleManagement({ initialModules, onModulesChange }: Mo
                           disabled={isSaving}
                         />
                       ) : (
-                        module.label
+                        <div
+                          className="flex items-center gap-2"
+                          style={{ paddingLeft: `${Math.min(depth, 6) * 1.25}rem` }}
+                        >
+                          {hasChildren ? (
+                            <button
+                              type="button"
+                              onClick={() => toggleCollapsed(module.id)}
+                              className="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-200 bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                              aria-label={`${isCollapsed ? 'Expand' : 'Collapse'} ${module.label}`}
+                            >
+                              <span
+                                className={`text-xs transition-transform ${
+                                  isCollapsed ? '-rotate-90' : 'rotate-0'
+                                }`}
+                                aria-hidden="true"
+                              >
+                                ▼
+                              </span>
+                            </button>
+                          ) : (
+                            <span className="h-6 w-6" aria-hidden="true" />
+                          )}
+                          {depth > 0 && (
+                            <span className="h-5 border-l border-b border-gray-300 pl-3 text-gray-400" aria-hidden="true" />
+                          )}
+                          <span
+                            className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold ${
+                              depth === 0
+                                ? 'bg-indigo-50 text-indigo-700'
+                                : 'bg-emerald-50 text-emerald-700'
+                            }`}
+                          >
+                            {depth === 0 ? 'Top' : `L${depth + 1}`}
+                          </span>
+                          <span>{module.label}</span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {isEditing ? (
+                        <select
+                          value={editingState.parentModuleId}
+                          onChange={(event) =>
+                            setEditingState((state) => ({
+                              ...state,
+                              parentModuleId: event.target.value,
+                            }))
+                          }
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                          disabled={isSaving}
+                        >
+                          <option value="">Top level</option>
+                          {getParentOptions(module.id).map((parentModule) => (
+                            <option key={parentModule.id} value={parentModule.id}>
+                              {parentModule.label}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        module.parentModuleLabel ?? 'Top level'
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={editingState.displayOrder}
+                          onChange={(event) =>
+                            setEditingState((state) => ({
+                              ...state,
+                              displayOrder: event.target.value,
+                            }))
+                          }
+                          className="w-24 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                          disabled={isSaving}
+                        />
+                      ) : (
+                        module.displayOrder
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
@@ -343,7 +575,7 @@ export default function ModuleManagement({ initialModules, onModulesChange }: Mo
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {module.subModules.length}
+                      {module.childModuleCount}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
