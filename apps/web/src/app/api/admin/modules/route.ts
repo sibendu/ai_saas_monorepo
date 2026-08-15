@@ -8,7 +8,7 @@ import type {
 
 import { getAdminAuthorization } from '@/lib/admin-auth'
 import { mapAdminModule, mapAdminModules, moduleWithSubModulesSelect } from '@/lib/admin-modules'
-import { prisma } from '@/lib/prisma'
+import { caseInsensitiveEquals, prisma } from '@/lib/prisma'
 
 function normalizeOptionalString(value: unknown): string | null {
   if (typeof value !== 'string') {
@@ -173,10 +173,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const existingModule = await prisma.module.findFirst({
       where: {
-        label: {
-          equals: label,
-          mode: 'insensitive',
-        },
+        label: caseInsensitiveEquals(label),
       },
     })
 

@@ -3,7 +3,7 @@ import { ApiResponse, AdminUserMutationRequest, AdminUserSummary } from '@saas/s
 import { writeAdminAuditLog } from '@/lib/admin-audit'
 import { getAdminAuthorization } from '@/lib/admin-auth'
 import { adminUserSelect, mapAdminUser } from '@/lib/admin-users'
-import { prisma } from '@/lib/prisma'
+import { caseInsensitiveEquals, prisma } from '@/lib/prisma'
 
 interface RouteContext {
   params: Promise<{
@@ -129,10 +129,7 @@ export async function PUT(request: Request, context: RouteContext): Promise<Next
 
     const duplicateUser = await prisma.customer.findFirst({
       where: {
-        email: {
-          equals: normalizedUser.email,
-          mode: 'insensitive',
-        },
+        email: caseInsensitiveEquals(normalizedUser.email),
         NOT: {
           id: parsedUserId,
         },

@@ -1,8 +1,8 @@
-import 'dotenv/config'
+import '../../scripts/load-root-env'
 import { defineConfig } from 'prisma/config'
 
 export default defineConfig({
-  schema: 'prisma/schema.prisma',
+  schema: process.env.PRISMA_SCHEMA || 'prisma/schema.prisma',
   migrations: {
     path: 'prisma/migrations',
   },

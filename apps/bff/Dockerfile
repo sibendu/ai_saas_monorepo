@@ -17,10 +17,11 @@ FROM deps AS builder
 
 COPY apps/web/prisma apps/web/prisma
 COPY apps/bff apps/bff
+COPY scripts scripts
 COPY packages/shared-types packages/shared-types
 
 RUN npm run build --workspace=packages/shared-types
-RUN npm exec --workspace=apps/web -- prisma generate
+RUN npm run db:generate --workspace=apps/web
 RUN npm run build --workspace=apps/bff
 
 FROM node:24-alpine AS prod-deps
@@ -55,6 +56,10 @@ COPY --from=prod-deps --chown=nodejs:nodejs /app/package.json ./package.json
 COPY --from=prod-deps --chown=nodejs:nodejs /app/package-lock.json ./package-lock.json
 COPY --from=builder --chown=nodejs:nodejs /app/apps/bff/package.json ./apps/bff/package.json
 COPY --from=builder --chown=nodejs:nodejs /app/apps/bff/dist ./apps/bff/dist
+COPY --from=builder --chown=nodejs:nodejs /app/apps/bff/scripts ./apps/bff/scripts
+COPY --from=builder --chown=nodejs:nodejs /app/scripts ./scripts
+COPY --from=builder --chown=nodejs:nodejs /app/apps/web/prisma ./apps/web/prisma
+COPY --from=builder --chown=nodejs:nodejs /app/apps/web/package.json ./apps/web/package.json
 COPY --from=builder --chown=nodejs:nodejs /app/packages/shared-types/package.json ./packages/shared-types/package.json
 COPY --from=builder --chown=nodejs:nodejs /app/packages/shared-types/dist ./packages/shared-types/dist
 
@@ -64,4 +69,4 @@ USER nodejs
 
 EXPOSE 3001
 
-CMD ["node", "dist/index.js"]
+CMD ["node", "scripts/start-with-db.js"]

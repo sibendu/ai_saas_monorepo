@@ -29,6 +29,14 @@ interface PreferencesUser {
   }[]
 }
 
+function normalizeAddressType(type: string): 'PERMANENT' | 'COMMUNICATION' {
+  return type === 'COMMUNICATION' ? 'COMMUNICATION' : 'PERMANENT'
+}
+
+function normalizeContactType(type: string): 'MOBILE' | 'OTHER' {
+  return type === 'OTHER' ? 'OTHER' : 'MOBILE'
+}
+
 async function getPreferencesUser(sessionUser: PreferencesUser): Promise<PreferencesUser> {
   if (!sessionUser.email) {
     return sessionUser
@@ -94,8 +102,14 @@ async function getPreferencesUser(sessionUser: PreferencesUser): Promise<Prefere
       lastName,
       dob: customer.dob ? customer.dob.toISOString().slice(0, 10) : null,
       company: customer.company,
-      addresses: customer.addresses,
-      contacts: customer.contacts,
+      addresses: customer.addresses.map((address) => ({
+        ...address,
+        type: normalizeAddressType(address.type),
+      })),
+      contacts: customer.contacts.map((contact) => ({
+        ...contact,
+        type: normalizeContactType(contact.type),
+      })),
     }
   } catch (error) {
     console.error('Failed to load preferences:', error)

@@ -98,10 +98,8 @@ export async function GET(request: Request): Promise<NextResponse> {
     }
 
     const where: Prisma.AuditLogWhereInput = {
-      ...(action ? { action: action as Prisma.EnumAdminAuditActionFilter['equals'] } : {}),
-      ...(entityType
-        ? { entityType: entityType as Prisma.EnumAdminAuditEntityTypeFilter['equals'] }
-        : {}),
+      ...(action ? { action } : {}),
+      ...(entityType ? { entityType } : {}),
       ...(actorEmail ? { actorEmail } : {}),
       ...(typeof targetCustomerId === 'number' ? { targetCustomerId } : {}),
       ...(typeof targetRoleId === 'number' ? { targetRoleId } : {}),
@@ -132,7 +130,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     return NextResponse.json<ApiResponse<AdminAuditLogsData>>({
       success: true,
       data: {
-        logs: pageLogs.map(mapAuditLog),
+        logs: pageLogs.map((log) => mapAuditLog(log)),
         nextCursor,
         totalCount,
       },

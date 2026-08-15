@@ -3,7 +3,7 @@ import type { AdminModuleMutationRequest, AdminModuleSummary, ApiResponse } from
 
 import { getAdminAuthorization } from '@/lib/admin-auth'
 import { mapAdminModule, moduleWithSubModulesSelect } from '@/lib/admin-modules'
-import { prisma } from '@/lib/prisma'
+import { caseInsensitiveEquals, prisma } from '@/lib/prisma'
 
 interface RouteContext {
   params: Promise<{
@@ -193,10 +193,7 @@ export async function PUT(request: Request, context: RouteContext): Promise<Next
 
     const existingModule = await prisma.module.findFirst({
       where: {
-        label: {
-          equals: label,
-          mode: 'insensitive',
-        },
+        label: caseInsensitiveEquals(label),
         NOT: {
           id: parsedModuleId,
         },

@@ -1,7 +1,12 @@
-const path = require('path')
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
+require('../../../scripts/load-root-env')
 
-const { PrismaClient, RegistrationType } = require('@prisma/client')
+const prismaClientPackage = require('@prisma/client')
+const { PrismaClient } = prismaClientPackage
+const RegistrationType = prismaClientPackage.RegistrationType ?? {
+  GOOGLE: 'GOOGLE',
+  GITHUB: 'GITHUB',
+  DIRECT: 'DIRECT',
+}
 const bcrypt = require('bcryptjs')
 
 const prisma = new PrismaClient()
@@ -9,121 +14,223 @@ const prisma = new PrismaClient()
 const roles = [
   ['Admin', 'Full access to all modules and settings'],
   ['User', 'Default application user access'],
-  ['Sales', 'CRM and reporting access for sales teams'],
-  ['CRM', 'Customer relationship workspace access'],
-  ['Marketing', 'Campaign reporting and dashboard access'],
+  ['CRM', 'CRM Role'],
+  ['Marketing', 'Marketing Role'],
+  ['Sales', 'Sales Role'],
 ]
 
 const modules = [
   {
-    label: 'CRM',
-    displayOrder: 2,
-    icon: 'users',
-    href: '/customers',
-    subModules: [
-      { label: 'CRM Dashboard', displayOrder: 1, icon: 'dashboard', href: '/customers/dashboard' },
-      { label: 'Contacts', displayOrder: 2, icon: 'users', href: '/customers' },
-      { label: 'Leads', displayOrder: 3, icon: 'workspace', href: '/customers/leads' },
-    ],
-  },
-  {
-    label: 'Reporting',
-    displayOrder: 3,
-    icon: 'chart',
-    href: '/reports',
-    subModules: [
-      { label: 'Reporting Overview', displayOrder: 1, icon: 'dashboard', href: '/reports' },
-      { label: 'Charts', displayOrder: 2, icon: 'chart', href: '/reports/charts' },
-    ],
-  },
-  {
-    label: 'Settings',
-    displayOrder: 4,
-    icon: 'settings',
-    href: '/preferences',
-    subModules: [{ label: 'Preferences', displayOrder: 1, icon: 'profile', href: '/preferences' }],
-  },
-  {
     label: 'Home',
     displayOrder: 1,
     icon: 'dashboard',
-    href: '/home',
+    href: '/dashboard',
     subModules: [],
   },
   {
     label: 'Admin',
-    displayOrder: 5,
+    displayOrder: 2,
     icon: 'settings',
     href: '/admin/roles',
     subModules: [
-      { label: 'Roles', displayOrder: 1, icon: 'settings', href: '/admin/roles' },
+      { label: 'Roles', displayOrder: 1, childDisplayOrder: 5, icon: 'settings', href: '/admin/roles' },
       { label: 'Users', displayOrder: 2, icon: 'users', href: '/admin/users' },
       { label: 'Groups', displayOrder: 3, icon: 'users', href: '/admin/groups' },
       { label: 'Modules', displayOrder: 4, icon: 'workspace', href: '/admin/modules' },
-      { label: 'Role-Module', displayOrder: 5, icon: 'workspace', href: '/admin/role-module' },
-      { label: 'Style', displayOrder: 6, icon: 'settings', href: '/admin/style' },
-      { label: 'Logs', displayOrder: 7, icon: 'workspace', href: '/admin/logs' },
+      { label: 'Role-Module', displayOrder: 5, childDisplayOrder: 6, icon: 'workspace', href: '/admin/role-module' },
+      { label: 'Style', displayOrder: 6, childDisplayOrder: 7, icon: 'settings', href: '/admin/style' },
+      { label: 'Logs', displayOrder: 7, childDisplayOrder: 8, icon: 'workspace', href: '/admin/logs' },
     ],
+  },
+  {
+    label: 'CRM',
+    displayOrder: 3,
+    icon: 'users',
+    href: '/customers',
+    subModules: [
+      { label: 'CRM Dashboard', displayOrder: 1, childDisplayOrder: 4, icon: 'dashboard', href: '/customers/dashboard' },
+      { label: 'Contacts', childLabel: 'Customer', displayOrder: 2, icon: 'users', href: '/customers' },
+      { label: 'Leads', displayOrder: 3, icon: 'workspace', href: '/customers/leads' },
+    ],
+  },
+  {
+    label: 'Sales',
+    displayOrder: 4,
+    icon: 'chart',
+    href: '/reports',
+    subModules: [
+      { label: 'Reporting Overview', childLabel: 'Sales Dashboard', displayOrder: 1, icon: 'dashboard', href: '/reports' },
+      { label: 'Charts', childLabel: 'Revenue', displayOrder: 2, icon: 'chart', href: '/reports/charts' },
+    ],
+  },
+  {
+    label: 'Marketing',
+    displayOrder: 5,
+    icon: null,
+    href: '/marketing',
+    subModules: [
+      { label: 'Campaign', displayOrder: 1, icon: null, href: '/campaign', createSubModule: false },
+    ],
+  },
+  {
+    label: 'Preference',
+    displayOrder: 6,
+    icon: 'settings',
+    href: '/preferences',
+    subModules: [{ label: 'Preferences', childLabel: 'Profile', displayOrder: 1, icon: 'profile', href: '/preferences' }],
   },
 ]
 
 const roleModuleAccess = {
   Admin: {
-    CRM: ['CRM Dashboard', 'Contacts', 'Leads'],
     Home: [],
-    Reporting: ['Reporting Overview', 'Charts'],
-    Settings: ['Preferences'],
     Admin: ['Roles', 'Users', 'Groups', 'Modules', 'Role-Module', 'Style', 'Logs'],
+    Roles: [],
+    Users: [],
+    Groups: [],
+    Modules: [],
+    'Role-Module': [],
+    Style: [],
+    Logs: [],
+    CRM: ['CRM Dashboard', 'Contacts', 'Leads'],
+    'CRM Dashboard': [],
+    Customer: [],
+    Leads: [],
+    Sales: ['Reporting Overview', 'Charts'],
+    'Sales Dashboard': [],
+    Revenue: [],
+    Marketing: [],
+    Campaign: [],
+    Preference: ['Preferences'],
+    Profile: [],
   },
   User: {
     Home: [],
-    Settings: ['Preferences'],
+    Profile: [],
+    Preference: ['Preferences'],
   },
   Sales: {
-    CRM: ['CRM Dashboard', 'Contacts', 'Leads'],
     Home: [],
-    Reporting: ['Reporting Overview'],
+    Profile: [],
+    Sales: [],
+    'Sales Dashboard': [],
+    Revenue: [],
+    Preference: [],
   },
   CRM: {
-    CRM: ['CRM Dashboard', 'Contacts', 'Leads'],
     Home: [],
+    Profile: [],
+    Customer: [],
+    CRM: [],
+    Leads: [],
+    'CRM Dashboard': [],
+    Preference: [],
   },
   Marketing: {
     Home: [],
-    Reporting: ['Reporting Overview', 'Charts'],
+    Profile: [],
+    Marketing: [],
+    Campaign: [],
+    Preference: [],
   },
 }
 
+const groupRoleAccess = [
+  {
+    name: 'Admin Group',
+    description: 'Migrated group for Admin role access',
+    roles: ['Admin'],
+    members: ['admin@example.com', 'sibendu.das@gmail.com'],
+  },
+  {
+    name: 'User Group',
+    description: 'Migrated group for User role access',
+    roles: ['User'],
+    members: ['user@example.com'],
+  },
+  {
+    name: 'Sales Group',
+    description: 'Sales team',
+    roles: ['Sales'],
+    members: ['sales@example.com'],
+  },
+  {
+    name: 'CRM Group',
+    description: 'CRM Team',
+    roles: ['CRM'],
+    members: ['crm@example.com'],
+  },
+  {
+    name: 'Marketing Group',
+    description: 'Marketing Team',
+    roles: ['Marketing'],
+    members: ['marketing@example.com'],
+  },
+]
+
+const staleSeedModuleLabels = [
+  'Contacts',
+  'Reporting Overview',
+  'Charts',
+  'Preferences',
+  'Reporting',
+  'Settings',
+]
+
 const testUsers = [
+  {
+    email: 'sibendu.das@gmail.com',
+    name: 'Sib Das',
+    firstName: 'Sib',
+    middleName: null,
+    lastName: 'Das',
+    company: null,
+    roles: [],
+  },
   {
     email: 'admin@example.com',
     name: 'Admin User',
+    firstName: 'Admin',
+    middleName: null,
+    lastName: 'User',
     company: 'SaaS Foundation',
-    roles: ['Admin'],
+    roles: [],
   },
   {
     email: 'sales@example.com',
     name: 'Sales User',
+    firstName: 'Sales',
+    middleName: null,
+    lastName: 'User',
     company: 'SaaS Foundation',
-    roles: ['Sales'],
+    roles: [],
   },
   {
     email: 'crm@example.com',
     name: 'CRM User',
+    firstName: 'CRM',
+    middleName: null,
+    lastName: 'User',
     company: 'SaaS Foundation',
-    roles: ['CRM'],
+    roles: [],
   },
   {
     email: 'marketing@example.com',
     name: 'Marketing User',
+    firstName: 'Marketing',
+    middleName: null,
+    lastName: 'User',
     company: 'SaaS Foundation',
-    roles: ['Marketing'],
+    roles: [],
   },
   {
     email: 'user@example.com',
-    name: 'Default User',
-    company: 'SaaS Foundation',
-    roles: ['User'],
+    name: 'General User',
+    firstName: 'Ram',
+    middleName: null,
+    lastName: 'Mukherjee',
+    company: 'General Company',
+    roles: [],
   },
 ]
 
@@ -150,6 +257,24 @@ async function upsertRoles() {
 }
 
 async function upsertModules() {
+  const configuredLabels = new Set(
+    modules.flatMap((moduleData) => [
+      moduleData.label,
+      ...moduleData.subModules.map((subModule) => subModule.childLabel ?? subModule.label),
+    ])
+  )
+
+  await prisma.module.updateMany({
+    where: {
+      label: {
+        notIn: [...configuredLabels],
+      },
+    },
+    data: {
+      parentModuleId: null,
+    },
+  })
+
   for (const moduleData of modules) {
     const moduleRecord = await prisma.module.upsert({
       where: { label: moduleData.label },
@@ -157,6 +282,7 @@ async function upsertModules() {
         displayOrder: moduleData.displayOrder,
         href: moduleData.href,
         icon: moduleData.icon,
+        parentModuleId: null,
       },
       create: {
         displayOrder: moduleData.displayOrder,
@@ -167,40 +293,52 @@ async function upsertModules() {
     })
 
     for (const subModule of moduleData.subModules) {
-      await prisma.subModule.upsert({
-        where: {
-          moduleId_label: {
+      if (subModule.createSubModule === false) {
+        await prisma.subModule.deleteMany({
+          where: {
             label: subModule.label,
             moduleId: moduleRecord.id,
           },
-        },
-        update: {
-          displayOrder: subModule.displayOrder,
-          href: subModule.href,
-          icon: subModule.icon,
-        },
-        create: {
-          href: subModule.href,
-          displayOrder: subModule.displayOrder,
-          icon: subModule.icon,
-          label: subModule.label,
-          moduleId: moduleRecord.id,
-        },
-      })
+        })
+      } else {
+        await prisma.subModule.upsert({
+          where: {
+            moduleId_label: {
+              label: subModule.label,
+              moduleId: moduleRecord.id,
+            },
+          },
+          update: {
+            displayOrder: subModule.displayOrder,
+            href: subModule.href,
+            icon: subModule.icon,
+          },
+          create: {
+            href: subModule.href,
+            displayOrder: subModule.displayOrder,
+            icon: subModule.icon,
+            label: subModule.label,
+            moduleId: moduleRecord.id,
+          },
+        })
+      }
+
+      const childModuleLabel = subModule.childLabel ?? subModule.label
+      const childDisplayOrder = subModule.childDisplayOrder ?? subModule.displayOrder
 
       await prisma.module.upsert({
-        where: { label: subModule.label },
+        where: { label: childModuleLabel },
         update: {
           href: subModule.href,
-          displayOrder: subModule.displayOrder,
+          displayOrder: childDisplayOrder,
           icon: subModule.icon,
           parentModuleId: moduleRecord.id,
         },
         create: {
           href: subModule.href,
-          displayOrder: subModule.displayOrder,
+          displayOrder: childDisplayOrder,
           icon: subModule.icon,
-          label: subModule.label,
+          label: childModuleLabel,
           parentModuleId: moduleRecord.id,
         },
       })
@@ -256,6 +394,11 @@ async function ensureRoleModule(roleId, moduleId, subModuleId = null) {
 async function seedRoleModuleAccess() {
   for (const [roleName, moduleAccess] of Object.entries(roleModuleAccess)) {
     const role = await findRole(roleName)
+    await prisma.roleModule.deleteMany({
+      where: {
+        roleId: role.id,
+      },
+    })
 
     for (const [moduleLabel, subModuleLabels] of Object.entries(moduleAccess)) {
       const moduleRecord = await findModule(moduleLabel)
@@ -274,11 +417,32 @@ async function seedRoleModuleAccess() {
   }
 }
 
+async function deleteStaleSeedModules() {
+  for (const label of staleSeedModuleLabels) {
+    await prisma.module.deleteMany({
+      where: {
+        label,
+        childModules: {
+          none: {},
+        },
+        roleLinks: {
+          none: {},
+        },
+      },
+    })
+  }
+}
+
 async function seedUsers() {
-  const password = await bcrypt.hash('Password123!', 12)
+  const password = await bcrypt.hash('abc', 12)
 
   for (const user of testUsers) {
-    const structuredName = splitName(user.name)
+    const structuredName = {
+      ...splitName(user.name),
+      firstName: user.firstName ?? splitName(user.name).firstName,
+      middleName: user.middleName ?? null,
+      lastName: user.lastName ?? splitName(user.name).lastName,
+    }
     const existingCustomer = await prisma.customer.findFirst({
       where: { email: user.email },
     })
@@ -291,6 +455,7 @@ async function seedUsers() {
             middleName: structuredName.middleName,
             lastName: structuredName.lastName,
             name: user.name,
+            password,
           },
         })
       : await prisma.customer.create({
@@ -306,42 +471,57 @@ async function seedUsers() {
           },
         })
 
-    for (const roleName of user.roles) {
-      const role = await findRole(roleName)
-      const group = await prisma.userGroup.upsert({
-        where: { name: `${roleName} Group` },
-        update: {
-          description: `Default group for ${roleName} role access`,
-        },
-        create: {
-          name: `${roleName} Group`,
-          description: `Default group for ${roleName} role access`,
-        },
-      })
+    void customer
+  }
+}
 
-      await prisma.groupRole.upsert({
-        where: {
-          groupId_roleId: {
-            groupId: group.id,
-            roleId: role.id,
-          },
-        },
-        update: {},
-        create: {
+async function seedGroupAccess() {
+  for (const groupData of groupRoleAccess) {
+    const group = await prisma.userGroup.upsert({
+      where: { name: groupData.name },
+      update: {
+        description: groupData.description,
+      },
+      create: {
+        name: groupData.name,
+        description: groupData.description,
+      },
+    })
+
+    await prisma.groupRole.deleteMany({
+      where: {
+        groupId: group.id,
+      },
+    })
+    await prisma.userGroupMember.deleteMany({
+      where: {
+        groupId: group.id,
+      },
+    })
+
+    for (const roleName of groupData.roles) {
+      const role = await findRole(roleName)
+
+      await prisma.groupRole.create({
+        data: {
           groupId: group.id,
           roleId: role.id,
         },
       })
+    }
 
-      await prisma.userGroupMember.upsert({
-        where: {
-          groupId_customerId: {
-            groupId: group.id,
-            customerId: customer.id,
-          },
-        },
-        update: {},
-        create: {
+    for (const email of groupData.members) {
+      const customer = await prisma.customer.findFirst({
+        where: { email },
+        select: { id: true },
+      })
+
+      if (!customer) {
+        throw new Error(`Missing seeded customer for group membership: ${email}`)
+      }
+
+      await prisma.userGroupMember.create({
+        data: {
           groupId: group.id,
           customerId: customer.id,
         },
@@ -354,7 +534,9 @@ async function main() {
   await upsertRoles()
   await upsertModules()
   await seedRoleModuleAccess()
+  await deleteStaleSeedModules()
   await seedUsers()
+  await seedGroupAccess()
 }
 
 main()

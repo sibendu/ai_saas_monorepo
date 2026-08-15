@@ -56,26 +56,7 @@ function findWorkspaceRoot(): string {
 
 function getEnvPaths(): string[] {
   const workspaceRoot = findWorkspaceRoot()
-  const candidates = [
-    path.join(workspaceRoot, '.env'),
-    path.join(workspaceRoot, 'apps', 'web', '.env'),
-  ]
-
-  return candidates.filter((candidate, index) => {
-    if (candidates.indexOf(candidate) !== index) {
-      return false
-    }
-
-    if (index === 0) {
-      return true
-    }
-
-    try {
-      return existsSync(candidate)
-    } catch {
-      return false
-    }
-  })
+  return [path.join(workspaceRoot, '.env.local')]
 }
 
 async function readStyleMutationRequest(

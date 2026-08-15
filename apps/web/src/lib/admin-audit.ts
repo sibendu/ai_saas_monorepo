@@ -47,13 +47,13 @@ interface AuditLogRow {
   id: number
   actorCustomerId: number | null
   actorEmail: string
-  action: AdminAuditAction
-  entityType: AdminAuditEntityType
+  action: string
+  entityType: string
   entityId: string | null
   entityLabel: string | null
   targetCustomerId: number | null
   targetRoleId: number | null
-  metadata: Prisma.JsonValue | null
+  metadata: Prisma.JsonValue | string | null
   createdAt: Date
 }
 
@@ -122,6 +122,36 @@ function toStringId(id: number | null): string | null {
   return id === null ? null : id.toString()
 }
 
+function isSqliteProvider(): boolean {
+  return process.env.DB_PROVIDER === 'sqlite' || process.env.DATABASE_URL?.startsWith('file:') === true
+}
+
+function serializeMetadata(metadata: ReturnType<typeof sanitizeMetadata>) {
+  if (!metadata) {
+    return undefined
+  }
+
+  return isSqliteProvider() ? JSON.stringify(metadata) : metadata
+}
+
+function parseMetadata(metadata: AuditLogRow['metadata']): Record<string, unknown> | null {
+  if (typeof metadata === 'string') {
+    try {
+      const parsedMetadata = JSON.parse(metadata)
+
+      return typeof parsedMetadata === 'object' && parsedMetadata !== null && !Array.isArray(parsedMetadata)
+        ? parsedMetadata as Record<string, unknown>
+        : null
+    } catch {
+      return null
+    }
+  }
+
+  return typeof metadata === 'object' && metadata !== null && !Array.isArray(metadata)
+    ? metadata as Record<string, unknown>
+    : null
+}
+
 export async function writeAdminAuditLog(
   prismaClient: AuditLogWriter,
   input: WriteAdminAuditLogInput
@@ -138,7 +168,7 @@ export async function writeAdminAuditLog(
       entityLabel: input.entityLabel ?? null,
       targetCustomerId: input.targetCustomerId ?? null,
       targetRoleId: input.targetRoleId ?? null,
-      metadata: metadata ?? undefined,
+      metadata: serializeMetadata(metadata) as never,
     },
   })
 }
@@ -148,16 +178,13 @@ export function mapAuditLog(log: AuditLogRow): AdminAuditLogSummary {
     id: log.id.toString(),
     actorCustomerId: toStringId(log.actorCustomerId),
     actorEmail: log.actorEmail,
-    action: log.action,
-    entityType: log.entityType,
+    action: log.action as AdminAuditAction,
+    entityType: log.entityType as AdminAuditEntityType,
     entityId: log.entityId,
     entityLabel: log.entityLabel,
     targetCustomerId: toStringId(log.targetCustomerId),
     targetRoleId: toStringId(log.targetRoleId),
-    metadata:
-      typeof log.metadata === 'object' && log.metadata !== null && !Array.isArray(log.metadata)
-        ? (log.metadata as Record<string, unknown>)
-        : null,
+    metadata: parseMetadata(log.metadata),
     createdAt: log.createdAt.toISOString(),
   }
 }

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { ApiResponse, AdminRoleMutationRequest, AdminRolesData, AdminRoleSummary } from '@saas/shared-types'
 import { writeAdminAuditLog } from '@/lib/admin-audit'
 import { getAdminAuthorization } from '@/lib/admin-auth'
-import { prisma } from '@/lib/prisma'
+import { caseInsensitiveEquals, prisma } from '@/lib/prisma'
 
 function mapRole(role: {
   id: number
@@ -126,10 +126,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const existingRole = await prisma.role.findFirst({
       where: {
-        name: {
-          equals: name,
-          mode: 'insensitive',
-        },
+        name: caseInsensitiveEquals(name),
       },
     })
 

@@ -38,19 +38,13 @@ Prisma is owned by the `apps/web` workspace and is pinned to Prisma `6.19.2`. Ru
    C:\Software\PostgreSQL\18\bin\pg_ctl start -D C:\Software\PostgreSQL\18\data
    ```
 
-2. Create the web app environment file.
-
-   ```powershell
-   Copy-Item apps\web\.env.local.example apps\web\.env
-   ```
-
-3. Edit `apps/web/.env` and set `DATABASE_URL`.
+2. Edit the root `.env.local` and set `DATABASE_URL`.
 
    ```env
    DATABASE_URL=postgresql://postgres:password@localhost:5432/postgres
    ```
 
-4. Validate the schema, apply migrations, and generate the Prisma client.
+3. Validate the schema, apply migrations, and generate the Prisma client.
 
    ```powershell
    npm run db:validate

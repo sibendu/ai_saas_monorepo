@@ -18,11 +18,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials, req) {
         try {
-          console.log('--- AUTH DEBUG START ---');
-          console.log('Full credentials object:', JSON.stringify(credentials, null, 2));
-
           if (!credentials) {
-            console.log('FAIL: No credentials provided');
             return null;
           }
 
@@ -30,10 +26,7 @@ export const authOptions: NextAuthOptions = {
           const email = identifier?.toLowerCase().trim();
           const password = credentials.password;
 
-          console.log(`Checking: "${email}"`);
-
           if (!email || !password) {
-            console.log('FAIL: Missing email/username or password');
             return null;
           }
 
@@ -49,7 +42,6 @@ export const authOptions: NextAuthOptions = {
           }
 
           if (!customer) {
-            console.log('FAIL: Customer not found');
             throw new Error('EMAIL_NOT_REGISTERED');
           }
 
@@ -57,7 +49,6 @@ export const authOptions: NextAuthOptions = {
             customerWithRegistrationType.registrationType === 'GOOGLE' ||
             customerWithRegistrationType.registrationType === 'GITHUB'
           ) {
-            console.log(`FAIL: Social account for ${customerWithRegistrationType.registrationType}`)
             throw new Error(`SOCIAL_LOGIN_REQUIRED:${customerWithRegistrationType.registrationType}`)
           }
 
@@ -65,11 +56,9 @@ export const authOptions: NextAuthOptions = {
           const isValidPassword = await bcrypt.compare(password, customer.password);
 
           if (!isValidPassword) {
-            console.log('FAIL: Invalid password');
             throw new Error('WRONG_EMAIL_OR_PASSWORD');
           }
 
-          console.log('SUCCESS: Customer authenticated');
           return {
             id: customer.id.toString(),
             name: customer.name,
@@ -88,9 +77,8 @@ export const authOptions: NextAuthOptions = {
           ) {
             throw error
           }
+          console.error('Unexpected credentials auth error:', error)
           return null;
-        } finally {
-          console.log('--- AUTH DEBUG END ---');
         }
       }
     }),

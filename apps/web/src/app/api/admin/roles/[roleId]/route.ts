@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { ApiResponse, AdminRoleMutationRequest, AdminRoleSummary } from '@saas/shared-types'
 import { writeAdminAuditLog } from '@/lib/admin-audit'
 import { getAdminAuthorization } from '@/lib/admin-auth'
-import { prisma } from '@/lib/prisma'
+import { caseInsensitiveEquals, prisma } from '@/lib/prisma'
 
 interface RouteContext {
   params: Promise<{
@@ -137,10 +137,7 @@ export async function PUT(request: Request, context: RouteContext): Promise<Next
 
     const existingRole = await prisma.role.findFirst({
       where: {
-        name: {
-          equals: name,
-          mode: 'insensitive',
-        },
+        name: caseInsensitiveEquals(name),
         NOT: {
           id: parsedRoleId,
         },

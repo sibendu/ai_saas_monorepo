@@ -399,6 +399,15 @@ export async function getUserRoleMenu(email: string | null | undefined): Promise
   }
 
   const normalizedEmail = email.toLowerCase().trim()
+
+  if (process.env.DB_PROVIDER === 'sqlite' || process.env.DATABASE_URL?.startsWith('file:')) {
+    try {
+      return await getDatabaseRoleMenu(normalizedEmail)
+    } catch (error) {
+      console.error('Error fetching sqlite role menu:', error)
+    }
+  }
+
   const roleMenuUrls = getRoleMenuUrls()
 
   for (const bffUrl of roleMenuUrls) {

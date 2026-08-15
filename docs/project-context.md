@@ -287,4 +287,4 @@ npm run test:all     # All tests (unit + integration + e2e)
 | `apps/bff/tsconfig.json` | Express + Node config | `module: commonjs`, `outDir: dist` |
 | `apps/web/next.config.js` | Next.js build config | Image optimization, API routes |
 | `apps/web/prisma/schema.prisma` | Database schema | Models, enums, migrations |
-| `.env` (local) | Local secrets | `DATABASE_URL`, `NEXTAUTH_SECRET` |
+| `.env.local` (root) | Local secrets and overrides | `DATABASE_URL`, `NEXTAUTH_SECRET` |

@@ -5,7 +5,17 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  log: ['query', 'error', 'warn'],
+  log: ['error', 'warn'],
 })
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+
+export function isSqliteProvider(): boolean {
+  return process.env.DB_PROVIDER === 'sqlite' || process.env.DATABASE_URL?.startsWith('file:') === true
+}
+
+export function caseInsensitiveEquals(value: string) {
+  return isSqliteProvider()
+    ? { equals: value }
+    : { equals: value, mode: 'insensitive' as const }
+}

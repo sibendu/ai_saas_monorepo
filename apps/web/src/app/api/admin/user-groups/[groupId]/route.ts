@@ -12,7 +12,7 @@ import {
   parseUserGroupId,
 } from '@/lib/admin-user-groups'
 import { getAdminAuthorization } from '@/lib/admin-auth'
-import { prisma } from '@/lib/prisma'
+import { caseInsensitiveEquals, prisma } from '@/lib/prisma'
 
 interface RouteContext {
   params: Promise<{
@@ -71,10 +71,7 @@ export async function PUT(request: Request, context: RouteContext): Promise<Next
 
     const existingGroup = await prisma.userGroup.findFirst({
       where: {
-        name: {
-          equals: name,
-          mode: 'insensitive',
-        },
+        name: caseInsensitiveEquals(name),
         NOT: {
           id: parsedGroupId,
         },

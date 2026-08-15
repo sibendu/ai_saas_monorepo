@@ -12,7 +12,7 @@ import {
   normalizeUserGroupName,
 } from '@/lib/admin-user-groups'
 import { getAdminAuthorization } from '@/lib/admin-auth'
-import { prisma } from '@/lib/prisma'
+import { caseInsensitiveEquals, prisma } from '@/lib/prisma'
 
 async function readUserGroupMutationRequest(
   request: Request
@@ -108,10 +108,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const existingGroup = await prisma.userGroup.findFirst({
       where: {
-        name: {
-          equals: name,
-          mode: 'insensitive',
-        },
+        name: caseInsensitiveEquals(name),
       },
     })
 

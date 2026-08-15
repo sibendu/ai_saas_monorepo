@@ -1,4 +1,5 @@
 const path = require('path')
+require('../../scripts/load-root-env')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

@@ -1,29 +1,29 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="12" failures="0" errors="0" time="0.3175092">
-    <testsuite name="src/tests/integration/api.integration.test.ts" timestamp="2026-08-15T16:07:12.505Z" hostname="YY341663" tests="12" failures="0" errors="0" skipped="0" time="0.3175092">
-        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns customers list" time="0.1226955">
+<testsuites name="vitest tests" tests="12" failures="0" errors="0" time="0.3260347">
+    <testsuite name="src/tests/integration/api.integration.test.ts" timestamp="2026-08-15T16:56:41.739Z" hostname="YY341663" tests="12" failures="0" errors="0" skipped="0" time="0.3260347">
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns customers list" time="0.1240801">
         </testcase>
-        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; searches and paginates customers by name company or email" time="0.1181132">
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; searches and paginates customers by name company or email" time="0.1069243">
         </testcase>
-        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; adds edits and deletes customers in memory" time="0.0234087">
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; adds edits and deletes customers in memory" time="0.033898">
         </testcase>
-        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns task list with required task fields" time="0.0290337">
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns task list with required task fields" time="0.0355856">
         </testcase>
-        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; updates task fields from actions menu edit flow" time="0.0034219">
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; updates task fields from actions menu edit flow" time="0.003841">
         </testcase>
-        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; deletes task after confirmation flow" time="0.0027402">
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; deletes task after confirmation flow" time="0.0029685">
         </testcase>
-        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns dashboard data for valid user payload" time="0.0032065">
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns dashboard data for valid user payload" time="0.0035401">
         </testcase>
-        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns the admin dashboard for Admin role users" time="0.0025746">
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns the admin dashboard for Admin role users" time="0.0027963">
         </testcase>
-        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns the sales dashboard for Sales role users" time="0.0025226">
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns the sales dashboard for Sales role users" time="0.0025625">
         </testcase>
-        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns the marketing dashboard for Marketing role users" time="0.002666">
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns the marketing dashboard for Marketing role users" time="0.0027246">
         </testcase>
-        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns the CRM dashboard for CRM role users" time="0.0027497">
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns the CRM dashboard for CRM role users" time="0.0028041">
         </testcase>
-        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns 400 when dashboard request missing user email" time="0.0029631">
+        <testcase classname="src/tests/integration/api.integration.test.ts" name="BFF API integration &gt; returns 400 when dashboard request missing user email" time="0.0027732">
         </testcase>
     </testsuite>
 </testsuites>

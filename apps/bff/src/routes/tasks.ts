@@ -23,7 +23,8 @@ type TaskUpdatePayload = {
 };
 
 const databaseUrl = process.env.DATABASE_URL;
-const pool = databaseUrl ? new Pool({ connectionString: databaseUrl }) : null;
+const isSqliteDemo = process.env.DB_PROVIDER === 'sqlite' || databaseUrl?.startsWith('file:');
+const pool = databaseUrl && !isSqliteDemo ? new Pool({ connectionString: databaseUrl }) : null;
 
 const fallbackTasks: Task[] = [
   {

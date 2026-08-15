@@ -32,6 +32,8 @@ backups/*.sql
 backups/*.tar
 backups/*.gz
 backups/*.zip
+apps/web/prisma/.generated/
+apps/web/prisma/data/
 
 # Logs
 *.log
