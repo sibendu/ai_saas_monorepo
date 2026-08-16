@@ -32,7 +32,9 @@ function createSqliteSchema(databaseUrl, schemaPath) {
         "company" TEXT,
         "registration_type" TEXT NOT NULL DEFAULT 'DIRECT',
         "password_reset_token" TEXT,
-        "password_reset_expires_at" DATETIME
+        "password_reset_expires_at" DATETIME,
+        "force_password_change" BOOLEAN NOT NULL DEFAULT 0,
+        "activation_pending" BOOLEAN NOT NULL DEFAULT 0
       );
 
       CREATE UNIQUE INDEX IF NOT EXISTS "customer_username_key" ON "customer"("username");
@@ -190,6 +192,22 @@ function createSqliteSchema(databaseUrl, schemaPath) {
       CREATE INDEX IF NOT EXISTS "audit_log_target_customer_id_idx" ON "audit_log"("target_customer_id");
       CREATE INDEX IF NOT EXISTS "audit_log_target_role_id_idx" ON "audit_log"("target_role_id");
     `)
+
+    const customerColumns = new Set(
+      database.prepare('PRAGMA table_info("customer")').all().map((column) => column.name)
+    )
+
+    if (!customerColumns.has('force_password_change')) {
+      database.exec(
+        'ALTER TABLE "customer" ADD COLUMN "force_password_change" BOOLEAN NOT NULL DEFAULT 0'
+      )
+    }
+
+    if (!customerColumns.has('activation_pending')) {
+      database.exec(
+        'ALTER TABLE "customer" ADD COLUMN "activation_pending" BOOLEAN NOT NULL DEFAULT 0'
+      )
+    }
   } finally {
     database.close()
   }
