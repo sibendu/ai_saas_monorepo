@@ -1,21 +1,28 @@
 'use client'
 
 import { signOut } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import { useAppName } from '@/components/AppNameProvider'
 
 interface HeaderProps {
   user: any
 }
 
 export default function Header({ user }: HeaderProps) {
+  const appName = useAppName()
+  const router = useRouter()
+
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/login' })
+    await signOut({ callbackUrl: '/login', redirect: false })
+    router.push('/login')
+    router.refresh()
   }
 
   return (
     <header className="bg-white shadow">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">SaaS Platform</h2>
+          <h2 className="text-xl font-semibold text-gray-900">{appName}</h2>
         </div>
         
         <div className="flex items-center gap-4">

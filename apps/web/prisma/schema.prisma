@@ -64,6 +64,8 @@ model Customer {
   registrationType       RegistrationType @default(DIRECT) @map("registration_type")
   passwordResetToken     String?          @map("password_reset_token")
   passwordResetExpiresAt DateTime?        @map("password_reset_expires_at")
+  forcePasswordChange    Boolean          @default(false) @map("force_password_change")
+  activationPending      Boolean          @default(false) @map("activation_pending")
   addresses              UserAddress[]
   contacts               UserContact[]
   userGroupMemberships   UserGroupMember[]

@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 
 import { isDirectMenuSection, MenuIconKey, MenuSectionConfig, menuUiConfig } from '@/config/navigation'
+import { useAppName } from '@/components/AppNameProvider'
 
 interface ShellUser {
   name?: string | null
@@ -93,12 +94,16 @@ export default function TopMenu({
   menuSections,
   children,
 }: TopMenuProps) {
+  const appName = useAppName()
   const pathname = usePathname()
+  const router = useRouter()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [openSectionId, setOpenSectionId] = useState<string | null>(null)
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/login' })
+    await signOut({ callbackUrl: '/login', redirect: false })
+    router.push('/login')
+    router.refresh()
   }
 
   const visibleMenuSections = menuSections.filter((section) => section.items.length > 0)
@@ -127,7 +132,7 @@ export default function TopMenu({
               </button>
             )}
             <Link href="/home" className="text-lg font-bold text-indigo-700 whitespace-nowrap">
-              SaaS Platform
+              {appName}
             </Link>
           </div>
 

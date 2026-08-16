@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import type { ApiResponse } from '@saas/shared-types'
 
 import { getAdminAuthorization } from '@/lib/admin-auth'
+import { getConfiguredAppName } from '@/lib/app-name'
 import { getConfiguredMenuLayout, isMenuLayout, MenuLayout } from '@/config/navigation'
 import {
   availableThemeStyles,
@@ -14,12 +15,14 @@ import {
 } from '@/config/theme'
 
 interface AdminStyleData {
+  appName: string
   activeStyle: ThemeName
   activeMenuLayout: MenuLayout
   styles: typeof availableThemeStyles
 }
 
 interface AdminStyleMutationRequest {
+  appName?: string
   style?: ThemeName
   menuLayout?: MenuLayout
 }
@@ -114,6 +117,7 @@ async function persistValuesToEnv(values: Record<string, string>) {
 
 function styleData(): AdminStyleData {
   return {
+    appName: getConfiguredAppName(),
     activeStyle: getConfiguredTheme(),
     activeMenuLayout: getConfiguredMenuLayout(),
     styles: availableThemeStyles,
@@ -156,13 +160,21 @@ export async function PUT(request: Request): Promise<NextResponse> {
       )
     }
 
+    const appName = typeof body.appName === 'string' ? body.appName.trim() : undefined
     const style = typeof body.style === 'string' ? body.style.trim().toLowerCase() : undefined
     const menuLayout =
       typeof body.menuLayout === 'string' ? body.menuLayout.trim().toLowerCase() : undefined
 
-    if (style === undefined && menuLayout === undefined) {
+    if (appName === undefined && style === undefined && menuLayout === undefined) {
       return NextResponse.json<ApiResponse<never>>(
-        { success: false, error: 'Style or menu layout is required' },
+        { success: false, error: 'Application name, style, or menu layout is required' },
+        { status: 400 }
+      )
+    }
+
+    if (appName !== undefined && (appName.length === 0 || appName.length > 80)) {
+      return NextResponse.json<ApiResponse<never>>(
+        { success: false, error: 'Application name must be between 1 and 80 characters' },
         { status: 400 }
       )
     }
@@ -182,6 +194,11 @@ export async function PUT(request: Request): Promise<NextResponse> {
     }
 
     const envUpdates: Record<string, string> = {}
+
+    if (appName) {
+      process.env.APP_NAME = appName
+      envUpdates.APP_NAME = appName
+    }
 
     if (style) {
       process.env.STYLE = style

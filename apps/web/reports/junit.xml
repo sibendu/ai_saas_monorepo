@@ -1,35 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="14" failures="0" errors="0" time="0.0274816">
-    <testsuite name="src/lib/admin-audit.unit.test.ts" timestamp="2026-08-15T16:56:52.262Z" hostname="YY341663" tests="2" failures="0" errors="0" skipped="0" time="0.0086263">
-        <testcase classname="src/lib/admin-audit.unit.test.ts" name="admin-audit &gt; writes normalized actor fields and allowlisted metadata only" time="0.0045639">
+<testsuites name="vitest tests" tests="5" failures="0" errors="0" time="1.7664483">
+    <testsuite name="src/lib/activation-registration.unit.test.ts" timestamp="2026-08-16T13:36:59.477Z" hostname="YY341663" tests="2" failures="0" errors="0" skipped="0" time="0.0838693">
+        <testcase classname="src/lib/activation-registration.unit.test.ts" name="activation registration &gt; creates a direct customer with an activation token and sends activation email" time="0.0802089">
         </testcase>
-        <testcase classname="src/lib/admin-audit.unit.test.ts" name="admin-audit &gt; maps audit log rows to string ids and ISO timestamps" time="0.0006252">
+        <testcase classname="src/lib/activation-registration.unit.test.ts" name="activation registration &gt; rejects duplicate emails without sending a new activation email" time="0.0005077">
         </testcase>
     </testsuite>
-    <testsuite name="src/app/api/admin/audit-logs/admin-audit-logs.unit.test.ts" timestamp="2026-08-15T16:56:52.268Z" hostname="YY341663" tests="12" failures="0" errors="0" skipped="0" time="0.0188553">
-        <testcase classname="src/app/api/admin/audit-logs/admin-audit-logs.unit.test.ts" name="admin audit logs API &gt; does not expose mutation methods" time="0.0013273">
+    <testsuite name="src/app/activate-account/activate-account.integration.test.tsx" timestamp="2026-08-16T13:36:59.481Z" hostname="YY341663" tests="1" failures="0" errors="0" skipped="0" time="0.1744464">
+        <testcase classname="src/app/activate-account/activate-account.integration.test.tsx" name="ActivateAccountPage &gt; uses the current authentication page style and accepts an activation token" time="0.1715122">
         </testcase>
-        <testcase classname="src/app/api/admin/audit-logs/admin-audit-logs.unit.test.ts" name="admin audit logs API &gt; rejects non-admin callers before querying audit rows" time="0.0062316">
+    </testsuite>
+    <testsuite name="src/tests/unit/UserManagement.unit.test.tsx" timestamp="2026-08-16T13:36:59.482Z" hostname="YY341663" tests="2" failures="0" errors="0" skipped="0" time="1.5081326">
+        <testcase classname="src/tests/unit/UserManagement.unit.test.tsx" name="UserManagement &gt; renders each user with assigned groups" time="0.0416738">
         </testcase>
-        <testcase classname="src/app/api/admin/audit-logs/admin-audit-logs.unit.test.ts" name="admin audit logs API &gt; returns newest-first logs with filters and pagination cursor" time="0.0042152">
-        </testcase>
-        <testcase classname="src/app/api/admin/audit-logs/admin-audit-logs.unit.test.ts" name="admin audit logs API &gt; validates bad query ?action=NOPE" time="0.0005522">
-        </testcase>
-        <testcase classname="src/app/api/admin/audit-logs/admin-audit-logs.unit.test.ts" name="admin audit logs API &gt; validates bad query ?entityType=NOPE" time="0.0003695">
-        </testcase>
-        <testcase classname="src/app/api/admin/audit-logs/admin-audit-logs.unit.test.ts" name="admin audit logs API &gt; validates bad query ?actorEmail=not-email" time="0.0003593">
-        </testcase>
-        <testcase classname="src/app/api/admin/audit-logs/admin-audit-logs.unit.test.ts" name="admin audit logs API &gt; validates bad query ?targetCustomerId=01" time="0.0003792">
-        </testcase>
-        <testcase classname="src/app/api/admin/audit-logs/admin-audit-logs.unit.test.ts" name="admin audit logs API &gt; validates bad query ?targetRoleId=0" time="0.0003929">
-        </testcase>
-        <testcase classname="src/app/api/admin/audit-logs/admin-audit-logs.unit.test.ts" name="admin audit logs API &gt; validates bad query ?cursor=1.5" time="0.0003476">
-        </testcase>
-        <testcase classname="src/app/api/admin/audit-logs/admin-audit-logs.unit.test.ts" name="admin audit logs API &gt; validates bad query ?from=not-date" time="0.0003565">
-        </testcase>
-        <testcase classname="src/app/api/admin/audit-logs/admin-audit-logs.unit.test.ts" name="admin audit logs API &gt; validates bad query ?from=2026-01-03T00:00:00.000Z&amp;to=2026-01-01T00:00:00.000Z" time="0.0003193">
-        </testcase>
-        <testcase classname="src/app/api/admin/audit-logs/admin-audit-logs.unit.test.ts" name="admin audit logs API &gt; validates bad query ?limit=101" time="0.0003097">
+        <testcase classname="src/tests/unit/UserManagement.unit.test.tsx" name="UserManagement &gt; updates profile and groups from the edit row" time="1.4636999">
         </testcase>
     </testsuite>
 </testsuites>

@@ -3,7 +3,7 @@ export interface User {
   id: string;
   username?: string;
   email: string;
-  role: 'admin' | 'user';
+  role: "admin" | "user";
   roles?: Role[];
 }
 
@@ -162,11 +162,23 @@ export interface AdminUserSummary {
   middleName?: string | null;
   lastName: string;
   company?: string | null;
+  activationStatus: "ACTIVE" | "PENDING";
   groups: AdminUserGroupMembershipSummary[];
 }
 
 export interface AdminUsersData {
   users: AdminUserSummary[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  filters: AdminUserSearchFilters;
+}
+
+export interface AdminUserSearchFilters {
+  name: string;
+  email: string;
+  company: string;
 }
 
 export interface AdminUserGroupMembershipSummary {
@@ -218,20 +230,27 @@ export interface AdminUserMutationRequest {
   company?: string | null;
 }
 
+export interface AdminUserCreateRequest extends AdminUserMutationRequest {
+  groupIds: string[];
+  creationMode: "activation" | "temporary_password";
+  temporaryPassword?: string;
+}
+
 export interface AdminUserGroupAssignmentRequest {
   groupIds: string[];
 }
 
 export type AdminAuditAction =
-  | 'ROLE_CREATED'
-  | 'ROLE_UPDATED'
-  | 'ROLE_DELETED'
-  | 'USER_UPDATED'
-  | 'USER_ROLES_UPDATED'
-  | 'GROUP_ROLES_UPDATED'
-  | 'ROLE_MODULES_UPDATED';
+  | "ROLE_CREATED"
+  | "ROLE_UPDATED"
+  | "ROLE_DELETED"
+  | "USER_UPDATED"
+  | "USER_ROLES_UPDATED"
+  | "GROUP_ROLES_UPDATED"
+  | "ROLE_MODULES_UPDATED";
 
-export type AdminAuditEntityType = 'ROLE' | 'CUSTOMER' | 'USER_ROLE' | 'GROUP_ROLE' | 'ROLE_MODULE';
+export type AdminAuditEntityType =
+  "ROLE" | "CUSTOMER" | "USER_ROLE" | "GROUP_ROLE" | "ROLE_MODULE";
 
 export interface AdminAuditLogSummary {
   id: string;
@@ -271,7 +290,7 @@ export interface Customer {
   email: string;
   company: string;
   phone: string;
-  status: 'active' | 'inactive' | 'pending';
+  status: "active" | "inactive" | "pending";
   createdAt: string;
 }
 
@@ -295,14 +314,14 @@ export interface CustomerMutationRequest {
   email: string;
   company: string;
   phone: string;
-  status: Customer['status'];
+  status: Customer["status"];
 }
 
 export interface Task {
   taskId: string;
   title: string;
   project: string;
-  priority: 'Low' | 'Medium' | 'High' | 'Critical';
+  priority: "Low" | "Medium" | "High" | "Critical";
   date: string;
   owner: string;
 }
@@ -316,7 +335,7 @@ export interface DashboardKpi {
   label: string;
   value: string;
   delta: string;
-  trend: 'up' | 'down';
+  trend: "up" | "down";
 }
 
 export interface DashboardChannel {
@@ -333,7 +352,7 @@ export interface DashboardCampaign {
 export interface DashboardRevenueDetail {
   label: string;
   value: string;
-  tone?: 'default' | 'accent';
+  tone?: "default" | "accent";
 }
 
 export interface DashboardRevenueSummary {
@@ -343,7 +362,7 @@ export interface DashboardRevenueSummary {
 }
 
 export interface DashboardData {
-  variant: 'admin' | 'sales' | 'crm' | 'marketing' | 'general';
+  variant: "admin" | "sales" | "crm" | "marketing" | "general";
   welcomeMessage: string;
   summaryMessage: string;
   kpiCards: DashboardKpi[];

@@ -1,0 +1,11 @@
+@echo off
+set REGISTRY_ID=630634485794.dkr.ecr.eu-west-1.amazonaws.com
+set AWS_REGION=eu-west-1
+set CLUSTER_NAME=aitest-cluster
+set EXECUTION_ROLE_ARN=arn:aws:iam::<account>:role/ecsTaskExecutionRole
+set NEXTAUTH_URL=http://localhost:3000
+set NEXTAUTH_SECRET=replace-with-a-secret
+set SUBNET_ID=subnet-<id>
+set SECURITY_GROUP_ID=sg-<id>
+set SERVICE_NAME=aitest-svc
+

@@ -2,7 +2,9 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/components/AuthProvider'
+import { AppNameProvider } from '@/components/AppNameProvider'
 import { getConfiguredThemeHref } from '@/config/theme'
+import { getConfiguredAppName } from '@/lib/app-name'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -19,6 +21,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const themeHref = getConfiguredThemeHref()
+  const appName = getConfiguredAppName()
 
   return (
     <html lang="en">
@@ -26,7 +29,9 @@ export default function RootLayout({
         <link id="app-theme-stylesheet" rel="stylesheet" href={themeHref} />
       </head>
       <body className={inter.className}>
-        <AuthProvider>{children}</AuthProvider>
+        <AppNameProvider appName={appName}>
+          <AuthProvider>{children}</AuthProvider>
+        </AppNameProvider>
       </body>
     </html>
   )

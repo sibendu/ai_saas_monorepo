@@ -1,12 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 
 const signOutMock = vi.fn()
+const routerPushMock = vi.fn()
+const routerRefreshMock = vi.fn()
 let currentPathname = '/home'
 
 vi.mock('next/navigation', () => ({
   usePathname: () => currentPathname,
+  useRouter: () => ({
+    push: routerPushMock,
+    refresh: routerRefreshMock,
+  }),
 }))
 
 vi.mock('next/link', () => ({
@@ -34,11 +40,14 @@ vi.mock('next-auth/react', () => ({
 }))
 
 import AppShell from '@/components/AppShell'
+import { AppNameProvider } from '@/components/AppNameProvider'
 
 describe('AppShell', () => {
   beforeEach(() => {
     currentPathname = '/home'
     signOutMock.mockClear()
+    routerPushMock.mockClear()
+    routerRefreshMock.mockClear()
   })
 
   it('renders shell metadata and navigation items', () => {
@@ -63,7 +72,7 @@ describe('AppShell', () => {
     expect(screen.getByText('Preferences')).toBeInTheDocument()
   })
 
-  it('calls signOut when logout is clicked', () => {
+  it('signs out without server redirect and navigates to login', async () => {
     render(
       <AppShell user={{ name: 'Demo User' }} pageTitle="Home">
         <div>Body</div>
@@ -73,7 +82,11 @@ describe('AppShell', () => {
     const logoutButtons = screen.getAllByRole('button', { name: 'Logout' })
     fireEvent.click(logoutButtons[0])
 
-    expect(signOutMock).toHaveBeenCalledWith({ callbackUrl: '/login' })
+    expect(signOutMock).toHaveBeenCalledWith({ callbackUrl: '/login', redirect: false })
+    await waitFor(() => {
+      expect(routerPushMock).toHaveBeenCalledWith('/login')
+    })
+    expect(routerRefreshMock).toHaveBeenCalled()
   })
 
   it('renders provided menu sections instead of static fallback navigation', () => {
@@ -141,6 +154,18 @@ describe('AppShell', () => {
     expect(screen.getByRole('button', { name: /Sales/ })).toBeInTheDocument()
     expect(screen.getByText('Leads')).toBeInTheDocument()
     expect(screen.queryByLabelText('Toggle sidebar')).not.toBeInTheDocument()
+  })
+
+  it('renders the configured application name in the top menu', () => {
+    render(
+      <AppNameProvider appName="Acme Workspace">
+        <AppShell user={{ name: 'Demo User' }} pageTitle="Home" menuLayout="top" menuSections={[]}>
+          <div>Body</div>
+        </AppShell>
+      </AppNameProvider>
+    )
+
+    expect(screen.getByText('Acme Workspace')).toBeInTheDocument()
   })
 
   it('renders single-item top-level sections as direct links in top layout', () => {

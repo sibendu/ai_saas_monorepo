@@ -365,7 +365,7 @@ async function getDatabaseRoleMenu(email: string): Promise<UserRolesResponse> {
 }
 
 export function mapAllowedModulesToMenuSections(modules: AllowedModule[]): MenuSectionConfig[] {
-  return [...modules]
+  const sections = [...modules]
     .sort(compareByDisplayOrder)
     .filter((module) => module.href || module.subModules.length > 0)
     .map((module) => ({
@@ -387,6 +387,35 @@ export function mapAllowedModulesToMenuSections(modules: AllowedModule[]): MenuS
               },
             ],
     }))
+
+  const resetPasswordItem = {
+    label: 'Reset Password',
+    href: '/change-password',
+    icon: 'profile' as MenuIconKey,
+  }
+  const settingsSection = sections.find((section) => section.id === 'settings')
+
+  if (settingsSection) {
+    settingsSection.label = 'Preference'
+    settingsSection.items = settingsSection.items.map((item) =>
+      item.href === '/preferences' ? { ...item, label: 'Profile' } : item
+    )
+    if (!settingsSection.items.some((item) => item.href === resetPasswordItem.href)) {
+      settingsSection.items.push(resetPasswordItem)
+    }
+  } else {
+    sections.push({
+      id: 'settings',
+      label: 'Preference',
+      icon: 'settings',
+      items: [
+        { label: 'Profile', href: '/preferences', icon: 'profile' },
+        resetPasswordItem,
+      ],
+    })
+  }
+
+  return sections
 }
 
 export async function getUserRoleMenu(email: string | null | undefined): Promise<UserRolesResponse> {

@@ -14,5 +14,9 @@ export async function requireAuthenticatedSession(): Promise<Session> {
     redirect('/login')
   }
 
+  if ((session.user as { requiresPasswordChange?: boolean } | undefined)?.requiresPasswordChange) {
+    redirect('/change-password')
+  }
+
   return session
 }

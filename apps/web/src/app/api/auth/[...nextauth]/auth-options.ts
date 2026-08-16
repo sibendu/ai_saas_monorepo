@@ -39,6 +39,7 @@ export const authOptions: NextAuthOptions = {
 
           const customerWithRegistrationType = customer as typeof customer & {
             registrationType?: 'GOOGLE' | 'GITHUB' | 'DIRECT'
+            forcePasswordChange?: boolean
           }
 
           if (!customer) {
@@ -66,6 +67,7 @@ export const authOptions: NextAuthOptions = {
             email: customer.email,
             company: customer.company,
             role: 'user',
+            requiresPasswordChange: Boolean(customerWithRegistrationType.forcePasswordChange),
           };
         } catch (error) {
           console.error('ERROR in authorize:', error);
@@ -193,6 +195,7 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as any).role
         token.company = (user as any).company
         token.isNewUser = (user as any).isNewUser
+        token.requiresPasswordChange = (user as any).requiresPasswordChange
       }
 
       // Fetch fresh customer data on session update or when company is missing
@@ -208,6 +211,7 @@ export const authOptions: NextAuthOptions = {
             token.company = customer.company
             // Clear isNewUser flag after preferences update
             token.isNewUser = false
+            token.requiresPasswordChange = customer.forcePasswordChange
           }
         } catch (error) {
           console.error('Error fetching customer in JWT callback:', error)
@@ -222,6 +226,7 @@ export const authOptions: NextAuthOptions = {
           if (customer) {
             token.name = customer.name
             token.company = customer.company
+            token.requiresPasswordChange = customer.forcePasswordChange
           }
         } catch (error) {
           console.error('Error fetching customer in JWT callback:', error)
@@ -237,6 +242,7 @@ export const authOptions: NextAuthOptions = {
         session.user.name = token.name
         session.user.company = token.company
         session.user.isNewUser = token.isNewUser
+        session.user.requiresPasswordChange = token.requiresPasswordChange
       }
       return session
     }

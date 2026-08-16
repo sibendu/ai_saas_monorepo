@@ -4,6 +4,7 @@ import { ChangeEvent, FormEvent, useState } from 'react'
 import { useSession } from 'next-auth/react'
 
 import AppShell from '@/components/AppShell'
+import PasswordChangeForm from '@/components/PasswordChangeForm'
 import { MenuLayout, MenuSectionConfig } from '@/config/navigation'
 import {
   ProfileAddressInput,
@@ -80,6 +81,21 @@ export default function PreferencesForm({ user, menuSections, menuLayout }: Pref
   const [error, setError] = useState('')
   const [statusMessage, setStatusMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [resetMessage, setResetMessage] = useState('')
+  const [resetError, setResetError] = useState('')
+  const [isSendingReset, setIsSendingReset] = useState(false)
+
+  async function sendResetLink() {
+    setResetError('')
+    setResetMessage('')
+    setIsSendingReset(true)
+    try {
+      const response = await fetch('/api/auth/forgot-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: formData.email }) })
+      const data = await response.json() as { error?: string; message?: string }
+      if (!response.ok) throw new Error(data.error ?? 'Unable to send reset link')
+      setResetMessage(data.message ?? 'Password reset link sent')
+    } catch (cause) { setResetError(cause instanceof Error ? cause.message : 'Unable to send reset link') } finally { setIsSendingReset(false) }
+  }
 
   function updateField(event: ChangeEvent<HTMLInputElement>) {
     setFormData((current) => ({
@@ -270,6 +286,17 @@ export default function PreferencesForm({ user, menuSections, menuLayout }: Pref
                 value={formData.company}
                 onChange={updateField}
               />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-4 sm:p-5">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Password</h3>
+            <p className="mt-1 text-sm text-gray-500">Change your password now, or email yourself a reset link.</p>
+            <div className="mt-4 max-w-md"><PasswordChangeForm /></div>
+            <div className="mt-5 border-t border-gray-100 pt-4">
+              {resetError && <p className="mb-3 text-sm text-red-700">{resetError}</p>}
+              {resetMessage && <p className="mb-3 text-sm text-green-700">{resetMessage}</p>}
+              <button type="button" onClick={sendResetLink} disabled={isSendingReset} className="rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 disabled:text-gray-400">{isSendingReset ? 'Sending...' : 'Email me a reset link'}</button>
             </div>
           </div>
 

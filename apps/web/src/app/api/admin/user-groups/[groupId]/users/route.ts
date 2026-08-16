@@ -80,6 +80,9 @@ async function buildGroupUsersData(groupId: number): Promise<AdminUserGroupUsers
           middleName: true,
           lastName: true,
           company: true,
+          passwordResetToken: true,
+          passwordResetExpiresAt: true,
+          activationPending: true,
           userGroupMemberships: {
             select: {
               group: {

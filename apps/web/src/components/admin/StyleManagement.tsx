@@ -6,6 +6,7 @@ import { AvailableThemeStyle, availableThemeStyles, ThemeName } from '@/config/t
 import { readApiResponse } from '@/lib/client-api'
 
 interface AdminStyleData {
+  appName: string
   activeStyle: ThemeName
   activeMenuLayout: MenuLayout
   styles: AvailableThemeStyle[]
@@ -22,6 +23,8 @@ function reloadOnStyleTab() {
 
 export default function StyleManagement() {
   const [activeStyle, setActiveStyle] = useState<ThemeName>('light')
+  const [activeAppName, setActiveAppName] = useState('SaaS Platform')
+  const [selectedAppName, setSelectedAppName] = useState('SaaS Platform')
   const [activeMenuLayout, setActiveMenuLayout] = useState<MenuLayout>('left')
   const [selectedMenuLayout, setSelectedMenuLayout] = useState<MenuLayout>('left')
   const [styles, setStyles] = useState<AvailableThemeStyle[]>(availableThemeStyles)
@@ -50,6 +53,8 @@ export default function StyleManagement() {
         }
 
         setActiveStyle(payload.data.activeStyle)
+        setActiveAppName(payload.data.appName)
+        setSelectedAppName(payload.data.appName)
         setActiveMenuLayout(payload.data.activeMenuLayout)
         setSelectedMenuLayout(payload.data.activeMenuLayout)
         setStyles(payload.data.styles)
@@ -106,6 +111,34 @@ export default function StyleManagement() {
     }
   }
 
+  async function handleApplyAppName() {
+    setIsSaving(true)
+    setStatusMessage(null)
+    setErrorMessage(null)
+
+    try {
+      const response = await fetch('/api/admin/style', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appName: selectedAppName }),
+      })
+      const payload = await readApiResponse<AdminStyleData>(response, 'Failed to update application name')
+
+      if (!response.ok || !payload.success || !payload.data) {
+        throw new Error(payload.error ?? 'Failed to update application name')
+      }
+
+      setActiveAppName(payload.data.appName)
+      setSelectedAppName(payload.data.appName)
+      setStatusMessage(payload.message ?? 'Application name updated successfully')
+      reloadOnStyleTab()
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to update application name')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   async function handleApplyMenuLayout() {
     setIsSaving(true)
     setStatusMessage(null)
@@ -157,6 +190,36 @@ export default function StyleManagement() {
 
   return (
     <section className="space-y-5">
+      <div className="bg-white rounded-lg shadow p-4 sm:p-5">
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(12rem,20rem)_auto] sm:items-end">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900">Application name</h3>
+            <p className="mt-1 text-sm text-gray-500">Shown in the application navigation and authentication screens.</p>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500" htmlFor="app-name">
+              Name
+            </label>
+            <input
+              id="app-name"
+              value={selectedAppName}
+              onChange={(event) => setSelectedAppName(event.target.value)}
+              maxLength={80}
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+              disabled={isSaving}
+            />
+          </div>
+          <button
+            type="button"
+            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
+            onClick={() => void handleApplyAppName()}
+            disabled={isSaving || selectedAppName.trim() === activeAppName}
+          >
+            {selectedAppName.trim() === activeAppName ? 'Applied' : 'Apply'}
+          </button>
+        </div>
+      </div>
+
       <div className="bg-white rounded-lg shadow p-4 sm:p-5">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Style</h2>

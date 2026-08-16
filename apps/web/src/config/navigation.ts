@@ -84,12 +84,17 @@ export const menuSections: MenuSectionConfig[] = [
   },
   {
     id: 'settings',
-    label: 'Settings',
+    label: 'Preference',
     icon: 'settings',
     items: [
       {
-        label: 'Preferences',
+        label: 'Profile',
         href: '/preferences',
+        icon: 'profile',
+      },
+      {
+        label: 'Reset Password',
+        href: '/change-password',
         icon: 'profile',
       },
     ],

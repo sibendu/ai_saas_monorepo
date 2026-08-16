@@ -98,8 +98,8 @@ export async function GET(request: Request): Promise<NextResponse> {
     }
 
     const where: Prisma.AuditLogWhereInput = {
-      ...(action ? { action } : {}),
-      ...(entityType ? { entityType } : {}),
+      ...(action ? { action: { equals: action as never } } : {}),
+      ...(entityType ? { entityType: { equals: entityType as never } } : {}),
       ...(actorEmail ? { actorEmail } : {}),
       ...(typeof targetCustomerId === 'number' ? { targetCustomerId } : {}),
       ...(typeof targetRoleId === 'number' ? { targetRoleId } : {}),

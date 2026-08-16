@@ -17,8 +17,8 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [email, setEmail] = useState('sibendu.das@gmail.com')
-  const [password, setPassword] = useState('abc')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -79,7 +79,9 @@ function LoginForm() {
       if (result?.error) {
         setError(getLoginErrorMessage(result.error))
       } else if (result?.ok) {
-        router.push('/home')
+        const sessionResponse = await fetch('/api/auth/session')
+        const session = await sessionResponse.json()
+        router.push(session?.user?.requiresPasswordChange ? '/change-password' : '/home')
         router.refresh()
       }
     } catch (err) {

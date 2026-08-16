@@ -1,0 +1,19 @@
+{
+  "cluster": "aitest-cluster",
+  "serviceName": "aitest-svc",
+  "taskDefinition": "arn:aws:ecs:eu-west-1:630634485794:task-definition/ai-saas-demo:4",
+  "desiredCount": 1,
+  "launchType": "FARGATE",
+  "platformVersion": "1.4.0",
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": ["subnet-0c80ef2bf4c34c95a"],
+      "securityGroups": ["sg-0f27e9208452f320f"],
+      "assignPublicIp": "ENABLED"
+    }
+  },
+  "deploymentConfiguration": {
+    "maximumPercent": 200,
+    "minimumHealthyPercent": 0
+  }
+}

@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import { generatePasswordResetToken, sendAccountActivationEmail } from './password-reset'
 import { prisma } from './prisma'
 import { splitDisplayName } from './profile'
+import { assignNewUserToGroups } from './default-user-group'
 
 interface ActivationRegistrationData {
   name?: string
@@ -10,6 +11,7 @@ interface ActivationRegistrationData {
   middleName?: string | null
   lastName?: string
   email?: string
+  groupIds?: number[]
 }
 
 interface ActivationRegistrationResult {
@@ -73,7 +75,7 @@ export async function startEmailActivationRegistration(
           }
         : splitDisplayName(name)
 
-    await prisma.customer.create({
+    const customer = await prisma.customer.create({
       data: {
         email,
         firstName: structuredName.firstName,
@@ -85,11 +87,14 @@ export async function startEmailActivationRegistration(
         registrationType: 'DIRECT',
         passwordResetToken: hashedToken,
         passwordResetExpiresAt: expiresAt,
+        activationPending: true,
       },
     })
 
+    await assignNewUserToGroups(customer.id, data.groupIds)
+
     const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-    const activationLink = `${appUrl}/reset-password?token=${rawToken}`
+    const activationLink = `${appUrl}/activate-account?token=${rawToken}`
 
     await sendAccountActivationEmail(email, activationLink, name)
 

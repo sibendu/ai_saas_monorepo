@@ -1,5 +1,8 @@
+'use client'
+
 import Link from 'next/link'
 import { ReactNode } from 'react'
+import { useAppName } from '@/components/AppNameProvider'
 
 interface AuthPageShellProps {
   title: string
@@ -8,11 +11,13 @@ interface AuthPageShellProps {
 }
 
 export default function AuthPageShell({ title, subtitle, children }: AuthPageShellProps) {
+  const appName = useAppName()
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-4 md:px-6">
         <Link href="/login" className="text-lg font-bold text-indigo-700">
-          SaaS Platform
+          {appName}
         </Link>
         <div className="flex items-center gap-2 text-sm">
           <Link

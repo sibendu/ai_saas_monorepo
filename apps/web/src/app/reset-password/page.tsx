@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signIn } from 'next-auth/react'
@@ -17,6 +17,13 @@ function ResetPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token') || searchParams.get('code') || ''
+  const isActivation = searchParams.get('mode') === 'activation'
+
+  useEffect(() => {
+    if (isActivation) {
+      router.replace(`/activate-account?token=${encodeURIComponent(token)}`)
+    }
+  }, [isActivation, router, token])
 
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -28,7 +35,7 @@ function ResetPasswordForm() {
     setError('')
 
     if (!token) {
-      setError('Invalid password reset link')
+      setError(isActivation ? 'Invalid account activation link' : 'Invalid password reset link')
       return
     }
 
@@ -80,12 +87,12 @@ function ResetPasswordForm() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <div className="bg-white rounded-2xl shadow-2xl p-10">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-5">
           <div className="text-center mb-10">
-            <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
-              Reset Password
+            <h1 className="text-xl font-semibold text-gray-900">
+              {isActivation ? 'Activate your account' : 'Reset Password'}
             </h1>
-            <p className="text-gray-500 mt-3 text-lg">Set your new password</p>
+            <p className="text-gray-500 mt-1 text-sm">{isActivation ? 'Choose a password to activate your account.' : 'Set your new password'}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -130,7 +137,7 @@ function ResetPasswordForm() {
               disabled={isLoading}
               className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all font-bold text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Resetting password...' : 'Reset Password'}
+              {isLoading ? 'Saving password...' : isActivation ? 'Activate account' : 'Reset Password'}
             </button>
           </form>
 

@@ -1,12 +1,15 @@
 import { prisma } from './prisma'
 import bcrypt from 'bcryptjs'
 import { splitDisplayName } from './profile'
+import { assignNewUserToGroups } from './default-user-group'
 
 export interface RegisterUserData {
     name?: string
     email: string
     password?: string
     registrationType?: 'GOOGLE' | 'GITHUB' | 'DIRECT'
+    forcePasswordChange?: boolean
+    groupIds?: number[]
 }
 
 export interface RegisterResult {
@@ -21,7 +24,7 @@ export interface RegisterResult {
  */
 export async function registerUser(data: RegisterUserData): Promise<RegisterResult> {
     try {
-        const { name, password } = data
+        const { name, password, forcePasswordChange = false, groupIds } = data
         const email = data.email?.toLowerCase().trim()
         const registrationType = data.registrationType || 'DIRECT'
 
@@ -61,9 +64,12 @@ export async function registerUser(data: RegisterUserData): Promise<RegisterResu
                 password: hashedPassword,
                 name,
                 company: null,
-                registrationType
+                registrationType,
+                forcePasswordChange
             }
         })
+
+        await assignNewUserToGroups(customer.id, groupIds)
 
         console.log('--- NEW CUSTOMER REGISTERED ---')
         console.log('ID:', customer.id)

@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import {
   isDirectMenuSection,
@@ -13,6 +13,7 @@ import {
   menuUiConfig,
 } from '@/config/navigation'
 import TopMenu from '@/components/TopMenu'
+import { useAppName } from '@/components/AppNameProvider'
 
 const sidebarExpandedStorageKey = 'saas-sidebar-expanded-sections'
 
@@ -140,7 +141,9 @@ export default function AppShell({
   menuLayout = 'left',
   children,
 }: AppShellProps) {
+  const appName = useAppName()
   const pathname = usePathname()
+  const router = useRouter()
   const visibleMenuSections = providedMenuSections ?? menuSections
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
@@ -179,7 +182,9 @@ export default function AppShell({
   }, [expandedSections])
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/login' })
+    await signOut({ callbackUrl: '/login', redirect: false })
+    router.push('/login')
+    router.refresh()
   }
 
   if (menuLayout === 'top') {
@@ -199,7 +204,7 @@ export default function AppShell({
     <div className="h-full flex flex-col">
       <div className={`h-16 px-3 flex items-center justify-between border-b ${menuUiConfig.borderClass}`}>
         {!isSidebarCollapsed && (
-          <span className="text-lg font-bold text-indigo-700">SaaS Platform</span>
+          <span className="text-lg font-bold text-indigo-700">{appName}</span>
         )}
         <button
           type="button"

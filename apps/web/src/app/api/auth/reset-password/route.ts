@@ -42,6 +42,8 @@ export async function POST(req: Request) {
         password: hashedPassword,
         passwordResetToken: null,
         passwordResetExpiresAt: null,
+        forcePasswordChange: false,
+        activationPending: false,
       },
     })
 

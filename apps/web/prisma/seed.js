@@ -77,7 +77,10 @@ const modules = [
     displayOrder: 6,
     icon: 'settings',
     href: '/preferences',
-    subModules: [{ label: 'Preferences', childLabel: 'Profile', displayOrder: 1, icon: 'profile', href: '/preferences' }],
+    subModules: [
+      { label: 'Preferences', childLabel: 'Profile', displayOrder: 1, icon: 'profile', href: '/preferences' },
+      { label: 'Reset Password', displayOrder: 2, icon: 'profile', href: '/change-password' },
+    ],
   },
 ]
 
@@ -101,13 +104,13 @@ const roleModuleAccess = {
     Revenue: [],
     Marketing: [],
     Campaign: [],
-    Preference: ['Preferences'],
+    Preference: ['Preferences', 'Reset Password'],
     Profile: [],
   },
   User: {
     Home: [],
     Profile: [],
-    Preference: ['Preferences'],
+    Preference: ['Preferences', 'Reset Password'],
   },
   Sales: {
     Home: [],
@@ -115,7 +118,7 @@ const roleModuleAccess = {
     Sales: [],
     'Sales Dashboard': [],
     Revenue: [],
-    Preference: [],
+    Preference: ['Reset Password'],
   },
   CRM: {
     Home: [],
@@ -124,14 +127,14 @@ const roleModuleAccess = {
     CRM: [],
     Leads: [],
     'CRM Dashboard': [],
-    Preference: [],
+    Preference: ['Reset Password'],
   },
   Marketing: {
     Home: [],
     Profile: [],
     Marketing: [],
     Campaign: [],
-    Preference: [],
+    Preference: ['Reset Password'],
   },
 }
 
@@ -143,8 +146,8 @@ const groupRoleAccess = [
     members: ['admin@example.com', 'sibendu.das@gmail.com'],
   },
   {
-    name: 'User Group',
-    description: 'Migrated group for User role access',
+    name: 'General',
+    description: 'Default group for new users',
     roles: ['User'],
     members: ['user@example.com'],
   },

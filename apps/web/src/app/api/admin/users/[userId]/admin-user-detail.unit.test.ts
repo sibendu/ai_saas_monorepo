@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   customerFindFirstMock,
   customerFindUniqueMock,
   customerUpdateMock,
+  customerDeleteMock,
   getAdminAuthorizationMock,
   transactionMock,
   writeAdminAuditLogMock,
@@ -11,244 +12,307 @@ const {
   customerFindFirstMock: vi.fn(),
   customerFindUniqueMock: vi.fn(),
   customerUpdateMock: vi.fn(),
+  customerDeleteMock: vi.fn(),
   getAdminAuthorizationMock: vi.fn(),
   transactionMock: vi.fn(),
   writeAdminAuditLogMock: vi.fn(),
-}))
+}));
 
-vi.mock('@/lib/admin-audit', () => ({
+vi.mock("@/lib/admin-audit", () => ({
   writeAdminAuditLog: writeAdminAuditLogMock,
-}))
+}));
 
-vi.mock('@/lib/admin-auth', () => ({
+vi.mock("@/lib/admin-auth", () => ({
   getAdminAuthorization: getAdminAuthorizationMock,
-}))
+}));
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock("@/lib/prisma", () => ({
   prisma: {
     $transaction: transactionMock,
     customer: {
       findFirst: customerFindFirstMock,
       findUnique: customerFindUniqueMock,
+      delete: customerDeleteMock,
     },
   },
-}))
+  caseInsensitiveEquals: (value: string) => ({ equals: value }),
+}));
 
-import { PUT } from './route'
+import { DELETE, PUT } from "./route";
 
 const routeContext = {
-  params: Promise.resolve({ userId: '2' }),
-}
+  params: Promise.resolve({ userId: "2" }),
+};
 
 const updatedUser = {
   id: 2,
-  email: 'jane@example.com',
-  name: 'Jane User',
+  email: "jane@example.com",
+  name: "Jane User",
   company: null,
   userRoles: [
     {
       role: {
         id: 3,
-        name: 'Support',
+        name: "Support",
         description: null,
       },
     },
   ],
   userGroupMemberships: [],
-}
+};
 
 function authorizeAdmin() {
   getAdminAuthorizationMock.mockResolvedValue({
     isAuthorized: true,
     customer: {
       id: 1,
-      email: 'admin@example.com',
-      name: 'Admin User',
+      email: "admin@example.com",
+      name: "Admin User",
       company: null,
     },
-  })
+  });
 }
 
 function putRequest(body: unknown): Request {
-  return new Request('http://localhost/api/admin/users/2', {
-    method: 'PUT',
+  return new Request("http://localhost/api/admin/users/2", {
+    method: "PUT",
     body: JSON.stringify(body),
-  })
+  });
 }
 
-describe('admin user detail API', () => {
+describe("admin user detail API", () => {
   beforeEach(() => {
-    customerFindFirstMock.mockReset()
-    customerFindUniqueMock.mockReset()
-    customerUpdateMock.mockReset()
-    getAdminAuthorizationMock.mockReset()
-    transactionMock.mockReset()
-    writeAdminAuditLogMock.mockReset()
+    customerFindFirstMock.mockReset();
+    customerFindUniqueMock.mockReset();
+    customerUpdateMock.mockReset();
+    customerDeleteMock.mockReset();
+    getAdminAuthorizationMock.mockReset();
+    transactionMock.mockReset();
+    writeAdminAuditLogMock.mockReset();
     transactionMock.mockImplementation((callback) =>
       callback({
         customer: {
           update: customerUpdateMock,
         },
-      })
-    )
-    authorizeAdmin()
-  })
+      }),
+    );
+    authorizeAdmin();
+  });
 
-  it('rejects non-admin callers before updating users', async () => {
+  it("rejects non-admin callers before updating users", async () => {
     getAdminAuthorizationMock.mockResolvedValue({
       isAuthorized: false,
       status: 403,
-      error: 'Admin access required',
-    })
+      error: "Admin access required",
+    });
 
-    const response = await PUT(putRequest({ name: 'Jane', email: 'jane@example.com' }), routeContext)
-
-    await expect(response.json()).resolves.toEqual({
-      success: false,
-      error: 'Admin access required',
-    })
-    expect(response.status).toBe(403)
-    expect(customerUpdateMock).not.toHaveBeenCalled()
-    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
-  })
-
-  it('rejects invalid user ids before reading the body', async () => {
-    const response = await PUT(putRequest({ name: 'Jane', email: 'jane@example.com' }), {
-      params: Promise.resolve({ userId: 'abc' }),
-    })
-
-    await expect(response.json()).resolves.toEqual({
-      success: false,
-      error: 'Invalid user id',
-    })
-    expect(response.status).toBe(400)
-    expect(customerFindUniqueMock).not.toHaveBeenCalled()
-    expect(customerUpdateMock).not.toHaveBeenCalled()
-    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
-  })
-
-  it('rejects malformed JSON with a client error', async () => {
     const response = await PUT(
-      new Request('http://localhost/api/admin/users/2', {
-        method: 'PUT',
-        body: '{',
-      }),
-      routeContext
-    )
+      putRequest({ name: "Jane", email: "jane@example.com" }),
+      routeContext,
+    );
 
     await expect(response.json()).resolves.toEqual({
       success: false,
-      error: 'Invalid JSON request body',
-    })
-    expect(response.status).toBe(400)
-    expect(customerFindUniqueMock).not.toHaveBeenCalled()
-    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
-  })
+      error: "Admin access required",
+    });
+    expect(response.status).toBe(403);
+    expect(customerUpdateMock).not.toHaveBeenCalled();
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled();
+  });
 
-  it('rejects blank required fields and invalid emails', async () => {
-    const blankNameResponse = await PUT(putRequest({ name: ' ', email: 'jane@example.com' }), routeContext)
+  it("rejects invalid user ids before reading the body", async () => {
+    const response = await PUT(
+      putRequest({ name: "Jane", email: "jane@example.com" }),
+      {
+        params: Promise.resolve({ userId: "abc" }),
+      },
+    );
+
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "Invalid user id",
+    });
+    expect(response.status).toBe(400);
+    expect(customerFindUniqueMock).not.toHaveBeenCalled();
+    expect(customerUpdateMock).not.toHaveBeenCalled();
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects malformed JSON with a client error", async () => {
+    const response = await PUT(
+      new Request("http://localhost/api/admin/users/2", {
+        method: "PUT",
+        body: "{",
+      }),
+      routeContext,
+    );
+
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "Invalid JSON request body",
+    });
+    expect(response.status).toBe(400);
+    expect(customerFindUniqueMock).not.toHaveBeenCalled();
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects blank required fields and invalid emails", async () => {
+    const blankNameResponse = await PUT(
+      putRequest({ name: " ", email: "jane@example.com" }),
+      routeContext,
+    );
     await expect(blankNameResponse.json()).resolves.toEqual({
       success: false,
-      error: 'Name is required',
-    })
-    expect(blankNameResponse.status).toBe(400)
+      error: "Name is required",
+    });
+    expect(blankNameResponse.status).toBe(400);
 
-    const blankEmailResponse = await PUT(putRequest({ name: 'Jane', email: ' ' }), routeContext)
+    const blankEmailResponse = await PUT(
+      putRequest({ name: "Jane", email: " " }),
+      routeContext,
+    );
     await expect(blankEmailResponse.json()).resolves.toEqual({
       success: false,
-      error: 'Email is required',
-    })
-    expect(blankEmailResponse.status).toBe(400)
+      error: "Email is required",
+    });
+    expect(blankEmailResponse.status).toBe(400);
 
-    const invalidEmailResponse = await PUT(putRequest({ name: 'Jane', email: 'not-email' }), routeContext)
+    const invalidEmailResponse = await PUT(
+      putRequest({ name: "Jane", email: "not-email" }),
+      routeContext,
+    );
     await expect(invalidEmailResponse.json()).resolves.toEqual({
       success: false,
-      error: 'Email format is invalid',
-    })
-    expect(invalidEmailResponse.status).toBe(400)
-    expect(customerUpdateMock).not.toHaveBeenCalled()
-    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
-  })
+      error: "Email format is invalid",
+    });
+    expect(invalidEmailResponse.status).toBe(400);
+    expect(customerUpdateMock).not.toHaveBeenCalled();
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled();
+  });
 
-  it('returns a conflict when the email belongs to another user', async () => {
-    customerFindUniqueMock.mockResolvedValue({ id: 2 })
-    customerFindFirstMock.mockResolvedValue({ id: 3, email: 'jane@example.com' })
+  it("returns a conflict when the email belongs to another user", async () => {
+    customerFindUniqueMock.mockResolvedValue({ id: 2 });
+    customerFindFirstMock.mockResolvedValue({
+      id: 3,
+      email: "jane@example.com",
+    });
 
-    const response = await PUT(putRequest({ name: 'Jane', email: 'jane@example.com' }), routeContext)
-
-    await expect(response.json()).resolves.toEqual({
-      success: false,
-      error: 'A user with this email already exists',
-    })
-    expect(response.status).toBe(409)
-    expect(customerUpdateMock).not.toHaveBeenCalled()
-    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
-  })
-
-  it('returns not found when the target user is missing', async () => {
-    customerFindUniqueMock.mockResolvedValue(null)
-
-    const response = await PUT(putRequest({ name: 'Jane', email: 'jane@example.com' }), routeContext)
+    const response = await PUT(
+      putRequest({ name: "Jane", email: "jane@example.com" }),
+      routeContext,
+    );
 
     await expect(response.json()).resolves.toEqual({
       success: false,
-      error: 'User not found',
-    })
-    expect(response.status).toBe(404)
-    expect(customerUpdateMock).not.toHaveBeenCalled()
-    expect(writeAdminAuditLogMock).not.toHaveBeenCalled()
-  })
+      error: "A user with this email already exists",
+    });
+    expect(response.status).toBe(409);
+    expect(customerUpdateMock).not.toHaveBeenCalled();
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled();
+  });
 
-  it('updates editable fields only and returns the updated user with groups', async () => {
+  it("returns not found when the target user is missing", async () => {
+    customerFindUniqueMock.mockResolvedValue(null);
+
+    const response = await PUT(
+      putRequest({ name: "Jane", email: "jane@example.com" }),
+      routeContext,
+    );
+
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "User not found",
+    });
+    expect(response.status).toBe(404);
+    expect(customerUpdateMock).not.toHaveBeenCalled();
+    expect(writeAdminAuditLogMock).not.toHaveBeenCalled();
+  });
+
+  it("updates editable fields only and returns the updated user with groups", async () => {
     customerFindUniqueMock.mockResolvedValue({
       id: 2,
-      email: 'old@example.com',
-      name: 'Old Name',
-      company: 'Old Co',
-    })
-    customerFindFirstMock.mockResolvedValue(null)
-    customerUpdateMock.mockResolvedValue(updatedUser)
+      email: "old@example.com",
+      name: "Old Name",
+      company: "Old Co",
+    });
+    customerFindFirstMock.mockResolvedValue(null);
+    customerUpdateMock.mockResolvedValue(updatedUser);
 
     const response = await PUT(
       putRequest({
-        name: ' Jane User ',
-        email: ' JANE@example.com ',
-        company: '   ',
+        name: " Jane User ",
+        email: " JANE@example.com ",
+        company: "   ",
       }),
-      routeContext
-    )
+      routeContext,
+    );
 
     await expect(response.json()).resolves.toEqual({
       success: true,
       data: {
-        id: '2',
-        email: 'jane@example.com',
-        name: 'Jane User',
+        id: "2",
+        email: "jane@example.com",
+        name: "Jane User",
         company: null,
         groups: [],
       },
-      message: 'User updated successfully',
-    })
-    expect(response.status).toBe(200)
+      message: "User updated successfully",
+    });
+    expect(response.status).toBe(200);
     expect(customerUpdateMock).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 2 },
         data: {
-          email: 'jane@example.com',
-          name: 'Jane User',
+          email: "jane@example.com",
+          name: "Jane User",
           company: null,
         },
-      })
-    )
+      }),
+    );
     expect(writeAdminAuditLogMock).toHaveBeenCalledWith(
       expect.any(Object),
       expect.objectContaining({
-        action: 'USER_UPDATED',
-        entityType: 'CUSTOMER',
-        entityId: '2',
+        action: "USER_UPDATED",
+        entityType: "CUSTOMER",
+        entityId: "2",
         targetCustomerId: 2,
-        metadata: { changedFields: ['email', 'name', 'company'] },
-      })
-    )
-  })
-})
+        metadata: { changedFields: ["email", "name", "company"] },
+      }),
+    );
+  });
+
+  it("prevents an administrator from deleting their own account", async () => {
+    const response = await DELETE(
+      new Request("http://localhost/api/admin/users/1", { method: "DELETE" }),
+      {
+        params: Promise.resolve({ userId: "1" }),
+      },
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: "You cannot delete your own account",
+    });
+    expect(customerDeleteMock).not.toHaveBeenCalled();
+  });
+
+  it("deletes another user after admin authorization", async () => {
+    customerDeleteMock.mockResolvedValue({ id: 2, name: "Jane User" });
+    const response = await DELETE(
+      new Request("http://localhost/api/admin/users/2", { method: "DELETE" }),
+      routeContext,
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      data: { id: "2" },
+      message: "Jane User was deleted",
+    });
+    expect(customerDeleteMock).toHaveBeenCalledWith({
+      where: { id: 2 },
+      select: { id: true, name: true },
+    });
+  });
+});

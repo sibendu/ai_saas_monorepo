@@ -8,6 +8,9 @@ export const adminUserSelect = {
   middleName: true,
   lastName: true,
   company: true,
+  passwordResetToken: true,
+  passwordResetExpiresAt: true,
+  activationPending: true,
   userGroupMemberships: {
     select: {
       group: {
@@ -29,6 +32,9 @@ interface AdminUserWithRoles {
   middleName: string | null
   lastName: string
   company: string | null
+  passwordResetToken: string | null
+  passwordResetExpiresAt: Date | null
+  activationPending: boolean
   userGroupMemberships: {
     group: {
       id: number
@@ -47,6 +53,13 @@ export function mapAdminUser(user: AdminUserWithRoles): AdminUserSummary {
     middleName: user.middleName,
     lastName: user.lastName,
     company: user.company,
+    activationStatus:
+      user.activationPending ||
+      (user.passwordResetToken !== null &&
+        user.passwordResetExpiresAt !== null &&
+        user.passwordResetExpiresAt > new Date())
+        ? 'PENDING'
+        : 'ACTIVE',
     groups: user.userGroupMemberships.map((membership) => ({
       id: membership.group.id.toString(),
       name: membership.group.name,

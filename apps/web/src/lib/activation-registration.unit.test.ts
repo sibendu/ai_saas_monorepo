@@ -4,6 +4,10 @@ import { startEmailActivationRegistration } from './activation-registration'
 import { prisma } from './prisma'
 import { sendAccountActivationEmail } from './password-reset'
 
+const { assignNewUserToGroupsMock } = vi.hoisted(() => ({
+  assignNewUserToGroupsMock: vi.fn(),
+}))
+
 vi.mock('./prisma', () => ({
   prisma: {
     customer: {
@@ -21,6 +25,10 @@ vi.mock('./password-reset', async () => {
     sendAccountActivationEmail: vi.fn(),
   }
 })
+
+vi.mock('./default-user-group', () => ({
+  assignNewUserToGroups: assignNewUserToGroupsMock,
+}))
 
 const customerMock = vi.mocked(prisma.customer)
 const sendAccountActivationEmailMock = vi.mocked(sendAccountActivationEmail)
@@ -46,6 +54,8 @@ describe('activation registration', () => {
       registrationType: 'DIRECT',
       passwordResetToken: 'hashed-token',
       passwordResetExpiresAt: new Date(),
+      forcePasswordChange: false,
+      activationPending: true,
     })
 
     const result = await startEmailActivationRegistration({
@@ -66,14 +76,16 @@ describe('activation registration', () => {
           registrationType: 'DIRECT',
           passwordResetToken: expect.any(String),
           passwordResetExpiresAt: expect.any(Date),
+          activationPending: true,
         }),
       })
     )
     expect(sendAccountActivationEmailMock).toHaveBeenCalledWith(
       'person@example.com',
-      expect.stringMatching(/^http:\/\/localhost:3000\/reset-password\?token=/),
+      expect.stringMatching(/^http:\/\/localhost:3000\/activate-account\?token=/),
       'Person Example'
     )
+    expect(assignNewUserToGroupsMock).toHaveBeenCalledWith(1, undefined)
   })
 
   it('rejects duplicate emails without sending a new activation email', async () => {
@@ -90,6 +102,8 @@ describe('activation registration', () => {
       registrationType: 'DIRECT',
       passwordResetToken: null,
       passwordResetExpiresAt: null,
+      forcePasswordChange: false,
+      activationPending: false,
     })
 
     const result = await startEmailActivationRegistration({

@@ -1,0 +1,72 @@
+{
+  "family": "ai-saas-demo",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::630634485794:role/ecsTaskExecutionRole",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "containerDefinitions": [
+    {
+      "name": "bff",
+      "image": "sibendu/saasbff",
+      "essential": true,
+      "portMappings": [
+        { "containerPort": 3001, "protocol": "tcp", "appProtocol": "http" }
+      ],
+      "environment": [
+        { "name": "PORT", "value": "3001" },
+        { "name": "WEB_APP_URL", "value": "http://localhost:3000" },
+        { "name": "DB_PROVIDER", "value": "sqlite" },
+        { "name": "DATABASE_URL", "value": "file:/tmp/saas-demo/demo.db" },
+        { "name": "DB_BOOTSTRAP_ON_START", "value": "true" },
+        { "name": "DB_SEED_ON_START", "value": "false" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/ai-saas-demo",
+          "awslogs-region": "eu-west-1",
+          "awslogs-stream-prefix": "bff"
+        }
+      }
+    },
+    {
+      "name": "web",
+      "image": "sibendu/saasweb",
+      "essential": true,
+      "dependsOn": [
+        { "containerName": "bff", "condition": "START" }
+      ],
+      "portMappings": [
+        { "containerPort": 3000, "protocol": "tcp", "appProtocol": "http" }
+      ],
+      "environment": [
+        { "name": "PORT", "value": "3000" },
+        { "name": "HOSTNAME", "value": "0.0.0.0" },
+        { "name": "NEXTAUTH_URL", "value": "http://localhost:3000" },
+        { "name": "NEXTAUTH_SECRET", "value": "nextauth-secret" },
+        { "name": "WEB_APP_URL", "value": "http://localhost:3000" },
+        { "name": "BFF_INTERNAL_URL", "value": "http://localhost:3001" },
+        { "name": "NEXT_PUBLIC_BFF_URL", "value": "http://localhost:3001" },
+        { "name": "STYLE", "value": "default" },
+        { "name": "MENU_LAYOUT", "value": "left" },
+        { "name": "DB_PROVIDER", "value": "sqlite" },
+        { "name": "DATABASE_URL", "value": "file:/tmp/saas-demo/demo.db" },
+        { "name": "DB_BOOTSTRAP_ON_START", "value": "true" },
+        { "name": "DB_SEED_ON_START", "value": "true" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/ai-saas-demo",
+          "awslogs-region": "eu-west-1",
+          "awslogs-stream-prefix": "web"
+        }
+      }
+    }
+  ]
+}

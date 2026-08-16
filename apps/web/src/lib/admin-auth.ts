@@ -65,6 +65,14 @@ export async function getAdminAuthorization(): Promise<AdminAuthorizationResult>
     }
   }
 
+  if ((session.user as { requiresPasswordChange?: boolean } | undefined)?.requiresPasswordChange) {
+    return {
+      isAuthorized: false,
+      status: 403,
+      error: 'Password change required',
+    }
+  }
+
   let customer: Awaited<ReturnType<typeof findCustomerWithRoles>>
 
   try {
