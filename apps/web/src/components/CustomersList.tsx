@@ -402,8 +402,56 @@ export default function CustomersList({ data }: CustomersListProps) {
         </p>
       </div>
 
-      <div className="overflow-hidden">
-        <table className="w-full table-fixed divide-y divide-gray-200">
+      <div className="sm:hidden" data-testid="customer-mobile-list">
+        <div className="space-y-3 p-4">
+          {customers.map((customer) => (
+            <article key={customer.id} className="rounded-lg border border-gray-200 p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="break-words text-base font-semibold text-gray-900">{customer.name}</h3>
+                  <p className="break-words text-sm text-gray-600">{customer.company}</p>
+                </div>
+                <span className={`shrink-0 px-2 py-1 text-xs font-semibold leading-5 rounded-full ${getStatusColor(customer.status)}`}>
+                  {customer.status}
+                </span>
+              </div>
+              <dl className="mt-4 space-y-2 text-sm">
+                <div>
+                  <dt className="font-medium text-gray-500">Email</dt>
+                  <dd className="break-words text-gray-900">{customer.email}</dd>
+                </div>
+                <div>
+                  <dt className="font-medium text-gray-500">Phone</dt>
+                  <dd className="break-words text-gray-900">{customer.phone}</dd>
+                </div>
+                <div>
+                  <dt className="font-medium text-gray-500">Created</dt>
+                  <dd className="text-gray-900">{formatDate(customer.createdAt)}</dd>
+                </div>
+              </dl>
+              <div className="mt-4 flex gap-3 text-sm">
+                <button
+                  type="button"
+                  className="min-h-11 flex-1 rounded-md border border-indigo-600 px-4 py-2 font-semibold text-indigo-700 hover:bg-indigo-50"
+                  onClick={() => startEdit(customer)}
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  className="min-h-11 flex-1 rounded-md border border-red-600 px-4 py-2 font-semibold text-red-700 hover:bg-red-50"
+                  onClick={() => void deleteCustomer(customer)}
+                >
+                  Delete
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      <div className="hidden overflow-x-auto sm:block" data-testid="customer-desktop-table">
+        <table className="min-w-[760px] w-full table-fixed divide-y divide-gray-200">
           <colgroup>
             <col className="w-[18%]" />
             <col className="w-[18%]" />
